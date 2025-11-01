@@ -1,151 +1,121 @@
 "use client";
-import { persistOfferV1, type Change } from "../lib/db";
-import { useEffect, useMemo, useState } from "react";
+export const dynamic = "force-dynamic";
+
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { persistOfferV1, type Change } from "../lib/db";
 
-const [sessionUser, setSessionUser] = useState<any>(null);
-useEffect(() => {
-  supabase.auth
-    .getSession()
-    .then(({ data }) => setSessionUser(data.session?.user ?? null));
-  const sub = supabase.auth.onAuthStateChange((_e, s) =>
-    setSessionUser(s?.user ?? null)
-  );
-  return () => sub.data?.subscription?.unsubscribe();
-}, []);
+type Brief = Record<string, string>;
+const DAY_RATE = 2000;
 
-const DAY_RATE = 2000; // € brutto (dein gewünschter Tagessatz)
-
-export default function OfferDraft() {
-  const [brief, setBrief] = useState<Record<string, string>>({});
+export default function OfferPage() {
+  // Basis-State
+  const [brief, setBrief] = useState<Brief>({});
   const [roles, setRoles] = useState<string[]>([]);
-  const [changes, setChanges] = useState<Change[]>([]);
-  const [email, setEmail] = useState("");
+  const [days, setDays] = useState<number>(5);
 
+  // Session / Aktionen
+  const [sessionUser, setSessionUser] = useState<any>(null);
+  const [changes, setChanges] = useState<Change[]>([]); // Reserve für spätere Change-Logs
+  const [email, setEmail] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  // Supabase-Session beobachten
   useEffect(() => {
-    setBrief(JSON.parse(localStorage.getItem("brief.form") || "{}"));
-    setRoles(JSON.parse(localStorage.getItem("brief.selected") || "[]"));
-    setChanges(JSON.parse(localStorage.getItem("offer.changes") || "[]"));
+    supabase.auth
+      .getSession()
+      .then(({ data }) => setSessionUser(data.session?.user ?? null));
+    const sub = supabase.auth.onAuthStateChange((_e, s) =>
+      setSessionUser(s?.user ?? null)
+    );
+    return () => sub.data?.subscription?.unsubscribe();
   }, []);
 
-  function log(kind: Change["kind"], field: string, note: string) {
-    const c = [...changes, { ts: Date.now(), kind, field, note }];
-    setChanges(c);
-    localStorage.setItem("offer.changes", JSON.stringify(c));
+  // Lokale Daten laden (Explore/Brief)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      setBrief(JSON.parse(localStorage.getItem("brief.form") || "{}"));
+      setRoles(JSON.parse(localStorage.getItem("brief.selected") || "[]"));
+    } catch {}
+  }, []);
+
+  // E-Mail Login (Magic Link)
+  async function saveWithEmail() {
+    try {
+      setSaving(true);
+      setMsg("");
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: `${window.location.origin}/portal` },
+      });
+      if (error) throw error;
+      setMsg("Login-Link gesendet. Bitte E-Mail prüfen.");
+    } catch (e: any) {
+      setMsg(e?.message || String(e));
+    } finally {
+      setSaving(false);
+    }
   }
 
-  // einfache Heuristik: Aufwandsschätzung aus Freitext (manuell veränderbar)
-  const [days, setDays] = useState(5);
-  const price = useMemo(() => days * DAY_RATE, [days]);
-
-  async function persistToSupabase() {
-    if (!email) return alert("Bitte E-Mail eintragen.");
-    // anonyme Drafts -> User mit Magic-Link verbinden
-    const { error: authErr } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/portal` },
-    });
-    if (authErr) return alert(authErr.message);
-
-    // optional: Draft in Tabelle 'offers' schreiben, sobald Session existiert (später)
-    alert(
-      "Magic-Link gesendet. Nach Login ist der Entwurf in Ihrem Portal sichtbar."
-    );
+  // Direkt ins Konto speichern (eingeloggt)
+  async function saveToAccount() {
+    try {
+      setSaving(true);
+      setMsg("");
+      const res = await persistOfferV1(supabase, {
+        brief,
+        selectedRoles: roles,
+        days,
+        dayRate: DAY_RATE,
+        changes,
+      });
+      setMsg(`Gespeichert: Brief ${res.briefId}, Offer ${res.offerId}`);
+    } catch (e: any) {
+      setMsg(e?.message || String(e));
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
-    <main className="max-w-5xl mx-auto p-6 space-y-6">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Angebot – Entwurf</h1>
-        <div className="text-sm text-gray-600">V1 (wird versioniert)</div>
-      </header>
+    <main className="max-w-3xl mx-auto p-6 space-y-6">
+      <h1 className="text-2xl font-semibold">Angebots-Entwurf</h1>
 
-      <section className="grid md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 space-y-4">
-          <Card title="Kurzbrief">
-            <Field
-              name="Ziel & Nutzen"
-              value={brief.ziel}
-              onEdit={(v) => {
-                setBrief({ ...brief, ziel: v });
-                localStorage.setItem(
-                  "brief.form",
-                  JSON.stringify({ ...brief, ziel: v })
-                );
-                log("edit", "ziel", "Ziel angepasst");
-              }}
-            />
-            <Field
-              name="Hebel"
-              value={brief.hebel}
-              onEdit={(v) => {
-                setBrief({ ...brief, hebel: v });
-                localStorage.setItem(
-                  "brief.form",
-                  JSON.stringify({ ...brief, hebel: v })
-                );
-                log("edit", "hebel", "Hebel angepasst");
-              }}
-            />
-            <Field
-              name="Zeitfenster"
-              value={brief.zeit}
-              onEdit={(v) => {
-                setBrief({ ...brief, zeit: v });
-                localStorage.setItem(
-                  "brief.form",
-                  JSON.stringify({ ...brief, zeit: v })
-                );
-                log("edit", "zeit", "Zeitfenster angepasst");
-              }}
-            />
-            <Field
-              name="Rollen (Ihre Worte)"
-              value={brief.rollen || roles.join(", ")}
-              onEdit={(v) => {
-                setBrief({ ...brief, rollen: v });
-                localStorage.setItem(
-                  "brief.form",
-                  JSON.stringify({ ...brief, rollen: v })
-                );
-                log("edit", "rollen", "Rollenbeschreibung angepasst");
-              }}
-            />
-          </Card>
-
-          <Card title="Aufwandsschätzung">
-            <div className="flex items-center gap-3">
-              <input
-                type="number"
-                className="border rounded-lg p-2 w-28"
-                min={1}
-                value={days}
-                onChange={(e) => {
-                  setDays(parseInt(e.target.value || "1"));
-                  log("edit", "days", "Tage angepasst");
-                }}
-              />
-              <span className="text-sm text-gray-600">
-                Tage · Richtwert {DAY_RATE} € / Tag
-              </span>
-            </div>
-          </Card>
+      <section className="rounded-xl border p-4 space-y-2">
+        <div className="text-sm">
+          <div>
+            <b>Rollen:</b> {roles.length ? roles.join(", ") : "—"}
+          </div>
+          <div>
+            <b>Ziel:</b> {brief.ziel || "—"}
+          </div>
+          <div>
+            <b>Hebel:</b> {brief.hebel || "—"}
+          </div>
         </div>
 
-        <div className="space-y-4">
-          <Card title="Preis (Richtwert)">
-            <div className="text-2xl font-semibold">
-              {new Intl.NumberFormat("de-DE", {
-                style: "currency",
-                currency: "EUR",
-              }).format(price)}
-            </div>
-            <p className="text-xs text-gray-600 mt-1">
-              Hinweis: final je nach Scope. Änderungswünsche werden versioniert.
-            </p>
-          </Card>
+        <div className="flex items-center gap-3">
+          <label className="text-sm">Tage:</label>
+          <input
+            type="number"
+            min={1}
+            className="w-24 border rounded-lg p-2"
+            value={days}
+            onChange={(e) => setDays(Math.max(1, Number(e.target.value) || 1))}
+          />
+          <div className="text-sm text-gray-700">
+            Satz: {DAY_RATE.toLocaleString("de-DE")} € / Tag
+          </div>
+        </div>
+      </section>
 
-          <Card title="Änderungs-Historie">
+      <section className="rounded-xl border p-4 space-y-3">
+        <h2 className="font-medium">Fortsetzen & speichern</h2>
+
+        {!sessionUser && (
+          <>
             <input
               type="email"
               placeholder="Ihre E-Mail"
@@ -153,84 +123,34 @@ export default function OfferDraft() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
-
-            {/* 1) Magic-Link schicken (ohne Login) */}
             <button
-              className="w-full rounded-lg bg-black text-white py-2"
-              onClick={persistToSupabase}
+              type="button"
+              className="w-full rounded-lg bg-black text-white py-2 disabled:opacity-50"
+              onClick={saveWithEmail}
+              disabled={saving || !email}
             >
-              Mit E-Mail fortsetzen
+              {saving ? "Sende…" : "Login-Link senden"}
             </button>
+          </>
+        )}
 
-            {/* 2) Nur sichtbar, wenn bereits eingeloggt */}
-            {sessionUser && (
-              <button
-                className="w-full rounded-lg border py-2 mt-2"
-                onClick={async () => {
-                  try {
-                    const res = await persistOfferV1(supabase, {
-                      brief,
-                      selectedRoles: roles,
-                      days,
-                      dayRate: DAY_RATE,
-                      changes,
-                    });
-                    alert(
-                      `Gespeichert. Brief ${res.briefId}, Offer ${res.offerId}.`
-                    );
-                  } catch (e: any) {
-                    alert(`Fehler beim Speichern: ${e.message || e}`);
-                  }
-                }}
-              >
-                In meinem Konto speichern
-              </button>
-            )}
+        {sessionUser && (
+          <button
+            type="button"
+            className="w-full rounded-lg border py-2 disabled:opacity-50"
+            onClick={saveToAccount}
+            disabled={saving}
+          >
+            {saving ? "Speichere…" : "In meinem Konto speichern"}
+          </button>
+        )}
 
-            <p className="text-xs text-gray-500 mt-2">
-              Sie bekommen einen Login-Link. Danach sehen Sie den Entwurf in
-              Ihrem Portal und wir stimmen Versionen (V2/V3) gemeinsam ab.
-            </p>
-          </Card>
-        </div>
+        {msg && <p className="text-sm text-gray-700 mt-2">{msg}</p>}
+        <p className="text-xs text-gray-500">
+          Mit Login akzeptieren Sie Abschlagszahlungen, Abnahmeprozess (5 WT)
+          und DSGVO-Hinweise.
+        </p>
       </section>
     </main>
-  );
-}
-
-function Card({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="border rounded-2xl p-4 bg-white shadow-sm">
-      <div className="font-semibold mb-2">{title}</div>
-      {children}
-    </div>
-  );
-}
-
-function Field({
-  name,
-  value,
-  onEdit,
-}: {
-  name: string;
-  value?: string;
-  onEdit: (v: string) => void;
-}) {
-  return (
-    <div className="space-y-1">
-      <label className="block text-sm font-medium">{name}</label>
-      <textarea
-        rows={4}
-        className="w-full border rounded-xl p-3 text-sm"
-        value={value || ""}
-        onChange={(e) => onEdit(e.target.value)}
-      />
-    </div>
   );
 }

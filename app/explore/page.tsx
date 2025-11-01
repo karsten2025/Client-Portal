@@ -1,6 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
-const CATALOG = [
+export const dynamic = "force-dynamic";
+
+import { useEffect, useState } from "react";
+
+type Role = { id: string; title: string; blurb: string };
+
+const CATALOG: Role[] = [
   {
     id: "interim",
     title: "Interim Manager (Operations)",
@@ -27,16 +32,23 @@ const CATALOG = [
 
 export default function Explore() {
   const [selected, setSelected] = useState<string[]>([]);
+
   useEffect(() => {
-    const s = JSON.parse(localStorage.getItem("brief.selected") || "[]");
-    setSelected(s);
+    if (typeof window === "undefined") return;
+    try {
+      const s = JSON.parse(localStorage.getItem("brief.selected") || "[]");
+      setSelected(Array.isArray(s) ? s : []);
+    } catch {}
   }, []);
+
   function toggle(id: string) {
     const s = selected.includes(id)
       ? selected.filter((x) => x !== id)
       : [...selected, id];
     setSelected(s);
-    localStorage.setItem("brief.selected", JSON.stringify(s));
+    if (typeof window !== "undefined") {
+      localStorage.setItem("brief.selected", JSON.stringify(s));
+    }
   }
 
   return (

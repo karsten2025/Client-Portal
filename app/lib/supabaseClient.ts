@@ -1,10 +1,8 @@
+// app/lib/supabaseClient.ts
 "use client";
-
 import { createClient } from "@supabase/supabase-js";
 
-// In Next.js werden Variablen mit NEXT_PUBLIC_* zur Build-Zeit ersetzt.
-// Kein direkter Zugriff auf "process" zur Laufzeit nötig.
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export const supabase = createClient(url, anon);
