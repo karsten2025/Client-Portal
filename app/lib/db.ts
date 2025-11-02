@@ -2,10 +2,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type Change = {
-  ts: number;
-  kind: "add" | "edit" | "remove";
-  field: string;
-  note: string;
+  kind: "snapshot" | "set" | "add" | "edit" | "remove";
+  path: string;
+  old?: any;
+  new?: any;
+  at?: string; // ISO-Zeitstempel
 };
 
 export async function persistOfferV1(

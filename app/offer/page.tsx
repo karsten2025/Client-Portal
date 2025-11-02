@@ -1,47 +1,112 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import NextDynamic from "next/dynamic";
+import Link from "next/link"; // ⬅️ neu
 import { supabase } from "../lib/supabaseClient";
 import { persistOfferV1, type Change } from "../lib/db";
+import { OfferPdf } from "../components/OfferPdf";
 
-type Brief = Record<string, string>;
+const PDFViewer = NextDynamic(
+  () => import("@react-pdf/renderer").then((m) => m.PDFViewer),
+  { ssr: false }
+);
+
+type Brief = Record<string, any>;
 const DAY_RATE = 2000;
 
 export default function OfferPage() {
-  // Basis-State
   const [brief, setBrief] = useState<Brief>({});
   const [roles, setRoles] = useState<string[]>([]);
   const [days, setDays] = useState<number>(5);
 
-  // Session / Aktionen
   const [sessionUser, setSessionUser] = useState<any>(null);
-  const [changes, setChanges] = useState<Change[]>([]); // Reserve für spätere Change-Logs
   const [email, setEmail] = useState("");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+  const [showPreview, setShowPreview] = useState(false);
 
-  // Supabase-Session beobachten
+  const total = useMemo(() => days * DAY_RATE, [days]);
+
   useEffect(() => {
-    supabase.auth
-      .getSession()
-      .then(({ data }) => setSessionUser(data.session?.user ?? null));
+    supabase.auth.getSession().then(({ data }) => {
+      setSessionUser(data.session?.user ?? null);
+    });
     const sub = supabase.auth.onAuthStateChange((_e, s) =>
       setSessionUser(s?.user ?? null)
     );
     return () => sub.data?.subscription?.unsubscribe();
   }, []);
 
-  // Lokale Daten laden (Explore/Brief)
   useEffect(() => {
     if (typeof window === "undefined") return;
-    try {
-      setBrief(JSON.parse(localStorage.getItem("brief.form") || "{}"));
-      setRoles(JSON.parse(localStorage.getItem("brief.selected") || "[]"));
-    } catch {}
+    const parseJson = <T,>(v: string | null, fallback: T): T => {
+      if (!v) return fallback;
+      try {
+        return JSON.parse(v) as T;
+      } catch {
+        return fallback;
+      }
+    };
+    const form = parseJson<Record<string, any>>(
+      localStorage.getItem("brief.form"),
+      {}
+    );
+    const selected = parseJson<string[]>(
+      localStorage.getItem("brief.selected"),
+      []
+    );
+    const dodChecks = parseJson<Record<string, boolean>>(
+      localStorage.getItem("brief.dodChecks"),
+      {}
+    );
+    const raci = parseJson<Record<string, string | Record<string, string>>>(
+      localStorage.getItem("brief.raci"),
+      {}
+    );
+    setBrief({ ...form, dodChecks, raci });
+    setRoles(Array.isArray(selected) ? selected : []);
   }, []);
 
-  // E-Mail Login (Magic Link)
+  function buildChanges(): Change[] {
+    const now = new Date().toISOString();
+    return [
+      { kind: "snapshot", path: "/brief", new: brief, at: now },
+      { kind: "set", path: "/selectedRoles", new: roles, at: now },
+      { kind: "set", path: "/days", new: days, at: now },
+      { kind: "set", path: "/dayRate", new: DAY_RATE, at: now },
+      { kind: "set", path: "/total", new: total, at: now },
+    ];
+  }
+
+  async function downloadPdf() {
+    const { pdf } = await import("@react-pdf/renderer");
+    const blob = await pdf(
+      <OfferPdf
+        brief={brief}
+        roles={roles}
+        days={days}
+        dayRate={DAY_RATE}
+        total={total}
+        options={[
+          { label: "Starter (3 WT)", days: 3, total: 3 * DAY_RATE },
+          { label: "Kern (5 WT)", days: 5, total: 5 * DAY_RATE },
+          { label: "Plus (8 WT)", days: 8, total: 8 * DAY_RATE },
+        ]}
+      />
+    ).toBlob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const file = `Angebotsentwurf_${(brief?.kunde || "Unbenannt")
+      .toString()
+      .replace(/\s+/g, "_")}.pdf`;
+    a.href = url;
+    a.download = file;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   async function saveWithEmail() {
     try {
       setSaving(true);
@@ -59,7 +124,6 @@ export default function OfferPage() {
     }
   }
 
-  // Direkt ins Konto speichern (eingeloggt)
   async function saveToAccount() {
     try {
       setSaving(true);
@@ -69,9 +133,11 @@ export default function OfferPage() {
         selectedRoles: roles,
         days,
         dayRate: DAY_RATE,
-        changes,
+        changes: buildChanges(),
       });
-      setMsg(`Gespeichert: Brief ${res.briefId}, Offer ${res.offerId}`);
+      const briefId = (res as any).briefId ?? (res as any).brief_id ?? "—";
+      const offerId = (res as any).offerId ?? (res as any).offer_id ?? "—";
+      setMsg(`Gespeichert: Brief ${briefId}, Offer ${offerId}`);
     } catch (e: any) {
       setMsg(e?.message || String(e));
     } finally {
@@ -83,16 +149,72 @@ export default function OfferPage() {
     <main className="max-w-3xl mx-auto p-6 space-y-6">
       <h1 className="text-2xl font-semibold">Angebots-Entwurf</h1>
 
-      <section className="rounded-xl border p-4 space-y-2">
-        <div className="text-sm">
+      {/* kleine Toolbar zum Hin- und Herspringen */}
+      <div className="flex flex-wrap gap-3">
+        <Link href="/explore" className="rounded-lg border px-3 py-1.5">
+          Rollen wählen
+        </Link>
+        <Link href="/brief" className="rounded-lg border px-3 py-1.5">
+          Brief bearbeiten (DoD/RACI)
+        </Link>
+        <button
+          type="button"
+          className="rounded-lg border px-3 py-1.5"
+          onClick={() => setShowPreview((v) => !v)}
+        >
+          {showPreview ? "Vorschau schließen" : "Vorschau öffnen"}
+        </button>
+        <button
+          type="button"
+          className="rounded-lg border px-3 py-1.5"
+          onClick={downloadPdf}
+        >
+          PDF herunterladen
+        </button>
+      </div>
+
+      {/* Info-Box + Editfelder */}
+      <section className="rounded-xl border p-4 space-y-4">
+        <div className="text-sm grid grid-cols-2 gap-2">
           <div>
             <b>Rollen:</b> {roles.length ? roles.join(", ") : "—"}
           </div>
           <div>
-            <b>Ziel:</b> {brief.ziel || "—"}
+            <b>Tage:</b> {days}
           </div>
           <div>
-            <b>Hebel:</b> {brief.hebel || "—"}
+            <b>Satz/Tag:</b> {DAY_RATE.toLocaleString("de-DE")} €
+          </div>
+          <div>
+            <b>Summe:</b> {total.toLocaleString("de-DE")} €
+          </div>
+        </div>
+
+        {/* Kundensprache */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label className="text-sm block mb-1">
+              Ergebnis (so sieht „fertig“ aus)
+            </label>
+            <input
+              className="w-full border rounded-lg p-2"
+              value={brief?.ziel ?? ""}
+              onChange={(e) =>
+                setBrief((b) => ({ ...b, ziel: e.target.value }))
+              }
+              placeholder="z. B. messbares Ergebnis in 5 WT"
+            />
+          </div>
+          <div>
+            <label className="text-sm block mb-1">Wichtigster Hebel</label>
+            <input
+              className="w-full border rounded-lg p-2"
+              value={brief?.hebel ?? ""}
+              onChange={(e) =>
+                setBrief((b) => ({ ...b, hebel: e.target.value }))
+              }
+              placeholder="z. B. Durchlaufzeit, Qualität, Klarheit…"
+            />
           </div>
         </div>
 
@@ -109,11 +231,30 @@ export default function OfferPage() {
             Satz: {DAY_RATE.toLocaleString("de-DE")} € / Tag
           </div>
         </div>
+
+        {showPreview && (
+          <div className="h-[70vh] border rounded-lg overflow-hidden">
+            <PDFViewer width="100%" height="100%">
+              <OfferPdf
+                brief={brief}
+                roles={roles}
+                days={days}
+                dayRate={DAY_RATE}
+                total={total}
+                options={[
+                  { label: "Starter (3 WT)", days: 3, total: 3 * DAY_RATE },
+                  { label: "Kern (5 WT)", days: 5, total: 5 * DAY_RATE },
+                  { label: "Plus (8 WT)", days: 8, total: 8 * DAY_RATE },
+                ]}
+              />
+            </PDFViewer>
+          </div>
+        )}
       </section>
 
+      {/* Login / Speichern */}
       <section className="rounded-xl border p-4 space-y-3">
         <h2 className="font-medium">Fortsetzen & speichern</h2>
-
         {!sessionUser && (
           <>
             <input
@@ -133,7 +274,6 @@ export default function OfferPage() {
             </button>
           </>
         )}
-
         {sessionUser && (
           <button
             type="button"
@@ -144,7 +284,6 @@ export default function OfferPage() {
             {saving ? "Speichere…" : "In meinem Konto speichern"}
           </button>
         )}
-
         {msg && <p className="text-sm text-gray-700 mt-2">{msg}</p>}
         <p className="text-xs text-gray-500">
           Mit Login akzeptieren Sie Abschlagszahlungen, Abnahmeprozess (5 WT)
