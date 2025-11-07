@@ -1,14 +1,13 @@
 "use client";
+
 import { useEffect, useState } from "react";
 
 export default function UnderConstruction() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const dismissed =
-      typeof window !== "undefined"
-        ? localStorage.getItem("uc.dismissed") === "1"
-        : false;
+    if (typeof window === "undefined") return;
+    const dismissed = localStorage.getItem("uc.dismissed") === "1";
     setOpen(!dismissed);
   }, []);
 
@@ -30,8 +29,8 @@ export default function UnderConstruction() {
             Under Construction
           </p>
           <p className="mt-0.5 text-sm leading-6">
-            Dieses Client-Portal wird aktiv aufgebaut (Alpha). Funktionen kommen
-            laufend dazu. Wenn du vorab Einblick möchtest:{" "}
+            Dieses Client-Portal befindet sich im Aufbau (Alpha). Funktionen
+            kommen laufend dazu. Für eine kurze Demo:{" "}
             <a
               href="mailto:karsten.zenk@gmail.com"
               className="underline underline-offset-4"

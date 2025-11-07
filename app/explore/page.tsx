@@ -1,94 +1,147 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { useLang } from "../LanguageProvider";
+import type { Lang } from "../lib/i18n";
 
-type Card = {
-  id: string;
-  title: string;
-  blurb: string;
-  rank?: string; // Bube | Dame | König | Ass
-  suit?: string; // ♣ ♦ ♥ ♠
+type CardBase = {
+  id: "sys" | "ops" | "res" | "coach";
+  rankKey: "jack" | "queen" | "king" | "ace";
+  suit?: string;
 };
 
-const CARDS: Card[] = [
-  {
-    id: "sys",
-    title: "Ganzheitliche Erfolgssteuerung",
-    blurb:
-      "Ich orchestriere Ihre Initiativen auf allen Ebenen – Produkt, Portfolio, Programm und Projekt. Mit dem methodisch besten Ansatz (prädiktiv, hybrid, agil) stelle ich sicher, dass Ihre Investitionen die definierte Strategie treffen und den maximalen Wert erzeugen.",
-    rank: "Bube",
-    suit: "♣",
-  },
-  {
-    id: "ops",
-    title: "Betriebssystem Performer",
-    blurb:
-      "Prozesse, Systeme und Teams richten wir auf messbare Performance, Effizienz und Skalierbarkeit aus – ergebnisorientiert.",
-    rank: "Dame",
-    suit: "♦",
-  },
-  {
-    id: "res",
-    title: "Strategische Resonanz-Steuerung",
-    blurb:
-      "Ich navigiere anspruchsvolle Stakeholder-Landschaften, übersetze Erwartungen und stelle sicher, dass Botschaften die richtigen Empfänger erreichen.",
-    rank: "König",
-    suit: "♦",
-  },
-  {
-    id: "coach",
-    title: "Sparring/Coaching (Lead, Team)",
-    blurb:
-      "Reflexion, Entscheidungsstütze, Klarheit in komplexen Lagen – souveräne, wirksame Entscheidungen.",
-    rank: "Ass",
-    suit: "♠",
-  },
+type CardText = { title: string; blurb: string };
+
+const BASE_CARDS: CardBase[] = [
+  { id: "sys", rankKey: "jack", suit: "♣" },
+  { id: "ops", rankKey: "queen", suit: "♦" },
+  { id: "res", rankKey: "king", suit: "♦" },
+  { id: "coach", rankKey: "ace", suit: "♠" },
 ];
 
-// Einheitshöhe für alle Karten (bei Bedarf anpassen)
+const RANK_LABELS: Record<Lang, Record<CardBase["rankKey"], string>> = {
+  de: { jack: "Bube", queen: "Dame", king: "König", ace: "Ass" },
+  en: { jack: "Jack", queen: "Queen", king: "King", ace: "Ace" },
+};
+
+const CARD_TEXT: Record<Lang, Record<CardBase["id"], CardText>> = {
+  de: {
+    sys: {
+      title: "Ganzheitliche Erfolgssteuerung",
+      blurb:
+        "Ich orchestriere Ihre Initiativen auf allen Ebenen – Produkt, Portfolio, Programm und Projekt. Mit dem methodisch passenden Ansatz stelle ich sicher, dass Investitionen Strategie und Wertbeitrag treffen.",
+    },
+    ops: {
+      title: "Betriebssystem Performer",
+      blurb:
+        "Prozesse, Systeme und Teams richten wir auf messbare Performance, Effizienz und Skalierbarkeit aus – mit klaren Verantwortlichkeiten.",
+    },
+    res: {
+      title: "Strategische Resonanz-Steuerung",
+      blurb:
+        "Ich navigiere anspruchsvolle Stakeholder-Landschaften und sorge dafür, dass Botschaften bei den richtigen Empfängern ankommen.",
+    },
+    coach: {
+      title: "Sparring/Coaching (Lead, Team)",
+      blurb:
+        "Reflexion und Entscheidungsunterstützung in komplexen Lagen – für souveräne, wirksame Entscheidungen.",
+    },
+  },
+  en: {
+    sys: {
+      title: "Holistic delivery steering",
+      blurb:
+        "I orchestrate your initiatives across product, portfolio, program and projects so investments align with strategy and value.",
+    },
+    ops: {
+      title: "Operating system performance",
+      blurb:
+        "We shape processes, systems and teams for measurable performance, efficiency and scalability, with clear ownership.",
+    },
+    res: {
+      title: "Strategic resonance steering",
+      blurb:
+        "I navigate complex stakeholder landscapes so messages land with the right people – focused and effective.",
+    },
+    coach: {
+      title: "Sparring / Coaching (leadership & teams)",
+      blurb:
+        "Structured reflection and decision support in complex situations – so leaders and teams act with clarity.",
+    },
+  },
+};
+
 const CARD_HEIGHT = "h-[460px]";
-const CARD_BASE = `relative border rounded-xl bg-white w-full ${CARD_HEIGHT} overflow-hidden flex flex-col pt-10 p-5`; // <- pt-10: Platz fürs Badge oben
+const CARD_BASE = `relative border rounded-xl bg-white w-full ${CARD_HEIGHT} overflow-hidden flex flex-col pt-10 p-5`;
 const BADGE =
   "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs text-gray-700 bg-white/90";
 
 export default function Explore() {
   const [selected, setSelected] = useState<string[]>([]);
+  const searchParams = useSearchParams();
+  const { lang, setLang, t } = useLang();
+  const initLangFromUrl = useRef(false);
 
   useEffect(() => {
     try {
       const s = JSON.parse(localStorage.getItem("brief.selected") || "[]");
-      setSelected(s);
+      setSelected(Array.isArray(s) ? s : []);
     } catch {}
   }, []);
+
+  // Sprache nur einmal aus URL ziehen
+  useEffect(() => {
+    if (initLangFromUrl.current) return;
+    initLangFromUrl.current = true;
+    const qp = searchParams.get("lang");
+    if (qp === "de" || qp === "en") setLang(qp as Lang);
+  }, [searchParams, setLang]);
 
   function toggle(id: string) {
     const s = selected.includes(id)
       ? selected.filter((x) => x !== id)
       : [...selected, id];
     setSelected(s);
-    localStorage.setItem("brief.selected", JSON.stringify(s));
+    if (typeof window !== "undefined") {
+      localStorage.setItem("brief.selected", JSON.stringify(s));
+    }
   }
 
   return (
     <main className="max-w-6xl mx-auto p-6 space-y-8">
-      <header>
-        <h1 className="text-2xl font-semibold">Was passt zu Ihrem Anliegen?</h1>
-        <p className="text-sm text-gray-600">
-          Klicken Sie Rollen an. Sie können später alles umformulieren.
-        </p>
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">{t("explore.title")}</h1>
+          <p className="text-sm text-gray-600">{t("explore.subtitle")}</p>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-gray-600">
+          <button
+            onClick={() => setLang("de")}
+            className={lang === "de" ? "font-semibold underline" : ""}
+          >
+            DE
+          </button>
+          <span>|</span>
+          <button
+            onClick={() => setLang("en")}
+            className={lang === "en" ? "font-semibold underline" : ""}
+          >
+            EN
+          </button>
+        </div>
       </header>
 
-      {/* 1 Spalte mobil, 2 ab md, 4 ab lg */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {CARDS.map((c) => {
+        {BASE_CARDS.map((c) => {
           const active = selected.includes(c.id);
-
-          // Für die eine Karte (sys) KEIN Clamp → vollständiger Text; sonst Clamp
+          const texts = CARD_TEXT[lang][c.id] ?? CARD_TEXT.de[c.id];
           const clamped =
             c.id !== "sys"
               ? {
                   display: "-webkit-box",
-                  WebkitLineClamp: 6, // bei Bedarf anpassen
+                  WebkitLineClamp: 6,
                   WebkitBoxOrient: "vertical" as const,
                   overflow: "hidden",
                 }
@@ -101,36 +154,33 @@ export default function Explore() {
                 active ? "border-black bg-gray-50" : "border-gray-200"
               }`}
             >
-              {/* Rang/Badge oben rechts */}
-              {(c.rank || c.suit) && (
-                <div className="absolute right-3 top-3">
-                  <span className={BADGE}>
-                    {c.rank && <span className="font-medium">{c.rank}</span>}
-                    {c.suit && <span aria-hidden="true">{c.suit}</span>}
+              <div className="absolute right-3 top-3">
+                <span className={BADGE}>
+                  <span className="font-medium">
+                    {RANK_LABELS[lang][c.rankKey]}
                   </span>
-                </div>
-              )}
+                  {c.suit && <span aria-hidden="true">{c.suit}</span>}
+                </span>
+              </div>
 
-              {/* Inhalt füllt die Karte; Textbereich kann bei Bedarf scrollen */}
               <div
                 className="flex-1 min-w-0 overflow-y-auto pr-1"
                 style={{ scrollbarGutter: "stable" as any }}
               >
                 <h3 className="font-semibold text-lg leading-snug">
-                  {c.title}
+                  {texts.title}
                 </h3>
                 <p className="mt-3 text-sm text-gray-700" style={clamped}>
-                  {c.blurb}
+                  {texts.blurb}
                 </p>
               </div>
 
-              {/* Button fix unten */}
               <div className="pt-4">
                 <button
                   onClick={() => toggle(c.id)}
                   className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-100"
                 >
-                  {active ? "Entfernen" : "Zum Brief hinzufügen"}
+                  {active ? t("explore.remove") : t("explore.add")}
                 </button>
               </div>
             </div>
@@ -139,9 +189,12 @@ export default function Explore() {
       </div>
 
       <div className="flex justify-end">
-        <a href="/brief" className="rounded-lg bg-black text-white px-4 py-2">
-          Weiter: Brief erstellen
-        </a>
+        <Link
+          href={`/brief?lang=${lang}`}
+          className="rounded-lg bg-black text-white px-4 py-2 text-sm"
+        >
+          {t("explore.next")}
+        </Link>
       </div>
     </main>
   );
