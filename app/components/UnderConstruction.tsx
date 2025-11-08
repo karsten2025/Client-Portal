@@ -1,22 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export default function UnderConstruction() {
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const dismissed = localStorage.getItem("uc.dismissed") === "1";
-    setOpen(!dismissed);
-  }, []);
-
-  function close() {
-    setOpen(false);
-    try {
-      localStorage.setItem("uc.v2.dismissed", "1");
-    } catch {}
-  }
+  // Nur einfache UI-Visibility pro Seitenaufruf / Tab.
+  // Kein localStorage → Banner ist überall zuverlässig sichtbar.
+  const [open, setOpen] = useState(true);
 
   if (!open) return null;
 
@@ -45,7 +34,7 @@ export default function UnderConstruction() {
           </p>
         </div>
         <button
-          onClick={close}
+          onClick={() => setOpen(false)}
           aria-label="Hinweis schließen"
           className="ml-auto rounded-md border border-amber-300 px-2 py-1 text-amber-900/80 hover:bg-amber-100"
         >
