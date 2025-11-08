@@ -419,54 +419,84 @@ export default function OfferPage() {
         </p>
       </section>
 
-      {/* Nächster Schritt: Freigabe / Next step: Confirmation */}
+      {/* Nächster Schritt: Freigabe / Hover-Erklärung */}
       <section className="rounded-xl border p-4 space-y-3">
         <h2 className="font-medium">
           {lang === "en"
-            ? "Next step: Confirm & kick off"
+            ? "Next step: Approve this offer"
             : "Nächster Schritt: Angebot freigeben"}
         </h2>
 
         <p className="text-sm text-gray-700">
           {lang === "en"
-            ? "If this draft reflects what you want, you can confirm it in the next step and receive a clean, binding offer summary."
-            : "Wenn dieser Entwurf zu Ihrem Vorhaben passt, können Sie im nächsten Schritt digital freigeben und eine klar dokumentierte Angebotsbestätigung erhalten."}
+            ? "If this draft reflects what you want, the next step will be a simple digital confirmation with a clear, documented offer summary."
+            : "Wenn dieser Entwurf zu Ihrem Vorhaben passt, erfolgt im nächsten Schritt eine einfache digitale Freigabe mit klar dokumentierter Angebotsbestätigung."}
         </p>
 
         <ul className="list-disc pl-5 text-xs text-gray-600 space-y-1">
           <li>
             {lang === "en"
-              ? "No surprise: scope, rate and days stay exactly as shown here."
+              ? "No surprises: scope, rate and days stay exactly as shown here."
               : "Keine Überraschungen: Leistungsumfang, Tagessatz und Tage bleiben exakt wie hier dargestellt."}
           </li>
           <li>
             {lang === "en"
-              ? "You see all conditions before you confirm."
+              ? "You see all conditions transparently before confirming."
               : "Sie sehen alle Bedingungen transparent, bevor Sie bestätigen."}
           </li>
           <li>
             {lang === "en"
-              ? "Your digital confirmation triggers preparation & scheduling."
+              ? "Your digital approval will trigger preparation and slot reservation."
               : "Ihre digitale Freigabe startet Vorbereitung und Slot-Reservierung."}
           </li>
         </ul>
 
-        <div className="flex flex-wrap gap-3 pt-2">
-          <Link
-            href={`/confirm?lang=${lang}`}
-            className="inline-flex items-center justify-center rounded-lg bg-black text-white px-4 py-2 text-sm"
-          >
-            {lang === "en"
-              ? "Continue: Confirm this offer"
-              : "Weiter: Dieses Angebot freigeben"}
-          </Link>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2">
+          {/* Button mit freundlichem Tooltip */}
+          <div className="relative group inline-flex">
+            <button
+              type="button"
+              className="rounded-full bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 text-sm font-medium"
+              title={
+                lang === "en"
+                  ? "Soon: click here to digitally approve this offer and receive a documented confirmation."
+                  : "Bald: Hier klicken, um dieses Angebot digital freizugeben und eine dokumentierte Bestätigung zu erhalten."
+              }
+            >
+              {lang === "en"
+                ? "Continue: Approve this offer"
+                : "Weiter: Dieses Angebot freigeben"}
+            </button>
+
+            <div className="pointer-events-none absolute left-0 top-full mt-2 w-[260px] rounded-lg bg-amber-50 border border-amber-300 text-[10px] sm:text-xs text-amber-900 shadow-md px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              {lang === "en" ? (
+                <>
+                  This button will, in the next expansion stage, lead you to a
+                  simple digital approval.
+                  <br />
+                  You&apos;ll review once more and confirm with one click.
+                </>
+              ) : (
+                <>
+                  Dieser Button führt Sie im nächsten Ausbauschritt zu einer
+                  einfachen digitalen Freigabe.
+                  <br />
+                  Sie prüfen final und bestätigen mit einem Klick.
+                </>
+              )}
+            </div>
+          </div>
 
           <a
-            href="mailto:karsten.zenk@gmail.com"
+            href={
+              lang === "de"
+                ? "mailto:karsten.zenk@gmail.com?subject=Frage%20zum%20Angebotsentwurf"
+                : "mailto:karsten.zenk@gmail.com?subject=Question%20about%20offer%20draft"
+            }
             className="text-xs text-gray-700 underline underline-offset-4"
           >
             {lang === "en"
-              ? "Questions first? Get in touch."
+              ? "Questions before approval? Reach out."
               : "Fragen vorab? Kurz melden."}
           </a>
         </div>
