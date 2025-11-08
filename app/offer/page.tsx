@@ -9,6 +9,7 @@ import { persistOfferV1, type Change } from "../lib/db";
 
 import { useLanguage } from "../lang/LanguageContext";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
+import { ProcessBar } from "../components/ProcessBar";
 
 import { PDFViewer, pdf } from "@react-pdf/renderer";
 import { OfferPdf } from "../components/OfferPdf";
@@ -77,7 +78,7 @@ export default function OfferPage() {
       setBrief({ ...form, dodChecks, raci });
       setRoles(Array.isArray(selected) ? selected : []);
     } catch {
-      // falls lokal was kaputt ist: still, UI bleibt leer aber nutzbar
+      // wenn lokal etwas korrupt ist: Seite bleibt nutzbar
     }
   }, []);
 
@@ -211,7 +212,7 @@ export default function OfferPage() {
 
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-6">
-      {/* Kopfzeile mit Navigation + Language Switch */}
+      {/* Header mit Navigation + Language Switch */}
       <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">
           {lang === "en" ? "Offer draft" : "Angebots-Entwurf"}
@@ -257,10 +258,12 @@ export default function OfferPage() {
             </button>
           </div>
 
-          {/* Sprachumschalter rechts im Header */}
           <LanguageSwitcher />
         </div>
       </header>
+
+      {/* Prozessvisualisierung */}
+      <ProcessBar current="offer" />
 
       {/* Zusammenfassung */}
       <section className="rounded-xl border p-4 space-y-3">
@@ -414,6 +417,59 @@ export default function OfferPage() {
             ? "By logging in you accept staged payments, a structured acceptance process (5 working days) and data protection notes."
             : "Mit Login akzeptieren Sie Abschlagszahlungen, Abnahmeprozess (5 WT) und DSGVO-Hinweise."}
         </p>
+      </section>
+
+      {/* Nächster Schritt: Freigabe / Next step: Confirmation */}
+      <section className="rounded-xl border p-4 space-y-3">
+        <h2 className="font-medium">
+          {lang === "en"
+            ? "Next step: Confirm & kick off"
+            : "Nächster Schritt: Angebot freigeben"}
+        </h2>
+
+        <p className="text-sm text-gray-700">
+          {lang === "en"
+            ? "If this draft reflects what you want, you can confirm it in the next step and receive a clean, binding offer summary."
+            : "Wenn dieser Entwurf zu Ihrem Vorhaben passt, können Sie im nächsten Schritt digital freigeben und eine klar dokumentierte Angebotsbestätigung erhalten."}
+        </p>
+
+        <ul className="list-disc pl-5 text-xs text-gray-600 space-y-1">
+          <li>
+            {lang === "en"
+              ? "No surprise: scope, rate and days stay exactly as shown here."
+              : "Keine Überraschungen: Leistungsumfang, Tagessatz und Tage bleiben exakt wie hier dargestellt."}
+          </li>
+          <li>
+            {lang === "en"
+              ? "You see all conditions before you confirm."
+              : "Sie sehen alle Bedingungen transparent, bevor Sie bestätigen."}
+          </li>
+          <li>
+            {lang === "en"
+              ? "Your digital confirmation triggers preparation & scheduling."
+              : "Ihre digitale Freigabe startet Vorbereitung und Slot-Reservierung."}
+          </li>
+        </ul>
+
+        <div className="flex flex-wrap gap-3 pt-2">
+          <Link
+            href={`/confirm?lang=${lang}`}
+            className="inline-flex items-center justify-center rounded-lg bg-black text-white px-4 py-2 text-sm"
+          >
+            {lang === "en"
+              ? "Continue: Confirm this offer"
+              : "Weiter: Dieses Angebot freigeben"}
+          </Link>
+
+          <a
+            href="mailto:karsten.zenk@gmail.com"
+            className="text-xs text-gray-700 underline underline-offset-4"
+          >
+            {lang === "en"
+              ? "Questions first? Get in touch."
+              : "Fragen vorab? Kurz melden."}
+          </a>
+        </div>
       </section>
     </main>
   );

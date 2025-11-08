@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "../lang/LanguageContext";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
+import { ProcessBar } from "../components/ProcessBar";
 
 type BriefForm = {
   company?: string;
@@ -196,6 +197,9 @@ export default function BriefPage() {
         </div>
         <LanguageSwitcher />
       </header>
+
+      {/* Prozessvisualisierung */}
+      <ProcessBar current="brief" />
 
       {/* 1. Client & project */}
       <section className="rounded-2xl border p-5 space-y-4">

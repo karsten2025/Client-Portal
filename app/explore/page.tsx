@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLanguage, type Lang } from "../lang/LanguageContext";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
+import { ProcessBar } from "../components/ProcessBar";
 
 type CardId = "sys" | "ops" | "res" | "coach";
 
@@ -138,6 +139,7 @@ export default function ExplorePage() {
 
   return (
     <main className="max-w-6xl mx-auto p-6 space-y-8">
+      {/* Header mit Language Switch */}
       <header className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">{t.title}</h1>
@@ -146,6 +148,10 @@ export default function ExplorePage() {
         <LanguageSwitcher />
       </header>
 
+      {/* Prozessanzeige: Schritt 1 (Explore) */}
+      <ProcessBar current="explore" />
+
+      {/* Karten-Auswahl */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {CARDS.map((c) => {
           const active = selected.includes(c.id);
@@ -158,6 +164,7 @@ export default function ExplorePage() {
                 active ? "border-black bg-gray-50" : "border-gray-200"
               }`}
             >
+              {/* Badge oben rechts */}
               <div className="absolute right-3 top-3">
                 <span className={BADGE}>
                   <span className="font-medium">{t.ranks[c.id]}</span>
@@ -165,6 +172,7 @@ export default function ExplorePage() {
                 </span>
               </div>
 
+              {/* Inhalt */}
               <div className="flex-1 min-w-0 overflow-y-auto pr-1">
                 <h3 className="font-semibold text-lg leading-snug">
                   {cardText.title}
@@ -172,6 +180,7 @@ export default function ExplorePage() {
                 <p className="mt-3 text-sm text-gray-700">{cardText.blurb}</p>
               </div>
 
+              {/* Button */}
               <div className="pt-4">
                 <button
                   onClick={() => toggle(c.id)}
@@ -185,6 +194,7 @@ export default function ExplorePage() {
         })}
       </div>
 
+      {/* Weiter-Button */}
       <div className="flex justify-end">
         <Link
           href={`/brief?lang=${lang}`}
