@@ -2,13 +2,14 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { supabase } from "../lib/supabaseClient";
 import { persistOfferV1, type Change } from "../lib/db";
-import { useLang } from "../LanguageProvider";
-import type { Lang } from "../lib/i18n";
+
+import { useLanguage } from "../lang/LanguageContext";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
+
 import { PDFViewer, pdf } from "@react-pdf/renderer";
 import { OfferPdf } from "../components/OfferPdf";
 
@@ -16,29 +17,20 @@ type Brief = Record<string, any>;
 const DAY_RATE = 2000;
 
 export default function OfferPage() {
+  // Basisdaten
   const [brief, setBrief] = useState<Brief>({});
   const [roles, setRoles] = useState<string[]>([]);
   const [days, setDays] = useState<number>(5);
 
+  // Session / Aktionen
   const [sessionUser, setSessionUser] = useState<any>(null);
   const [email, setEmail] = useState("");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
 
-  const searchParams = useSearchParams();
-  const { lang, setLang, t } = useLang();
-  const initLangFromUrl = useRef(false);
-
+  const { lang } = useLanguage();
   const total = useMemo(() => days * DAY_RATE, [days]);
-
-  // Sprache nur einmal aus URL übernehmen
-  useEffect(() => {
-    if (initLangFromUrl.current) return;
-    initLangFromUrl.current = true;
-    const qp = searchParams.get("lang");
-    if (qp === "de" || qp === "en") setLang(qp as Lang);
-  }, [searchParams, setLang]);
 
   // Supabase-Session beobachten
   useEffect(() => {
@@ -54,16 +46,17 @@ export default function OfferPage() {
   // Lokale Daten (Brief & Rollen) laden
   useEffect(() => {
     if (typeof window === "undefined") return;
-    try {
-      const parseJson = <T,>(v: string | null, fallback: T): T => {
-        if (!v) return fallback;
-        try {
-          return JSON.parse(v) as T;
-        } catch {
-          return fallback;
-        }
-      };
 
+    const parseJson = <T,>(v: string | null, fallback: T): T => {
+      if (!v) return fallback;
+      try {
+        return JSON.parse(v) as T;
+      } catch {
+        return fallback;
+      }
+    };
+
+    try {
       const form = parseJson<Record<string, any>>(
         localStorage.getItem("brief.form"),
         {}
@@ -81,28 +74,23 @@ export default function OfferPage() {
         {}
       );
 
-      setBrief({
-        ...form,
-        dodChecks,
-        raci,
-      });
+      setBrief({ ...form, dodChecks, raci });
       setRoles(Array.isArray(selected) ? selected : []);
     } catch {
-      // UI bleibt nutzbar, notfalls leer
+      // falls lokal was kaputt ist: still, UI bleibt leer aber nutzbar
     }
   }, []);
 
   // Change-Log vorbereiten
   function buildChanges(): Change[] {
     const now = new Date().toISOString();
-    const changes: Change[] = [
+    return [
       { kind: "snapshot", path: "/brief", new: brief, at: now },
       { kind: "set", path: "/selectedRoles", new: roles, at: now },
       { kind: "set", path: "/days", new: days, at: now },
       { kind: "set", path: "/dayRate", new: DAY_RATE, at: now },
       { kind: "set", path: "/total", new: total, at: now },
     ];
-    return changes;
   }
 
   // Magic-Link Login
@@ -110,13 +98,16 @@ export default function OfferPage() {
     try {
       setSaving(true);
       setMsg("");
+
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
           emailRedirectTo: `${window.location.origin}/portal`,
         },
       });
+
       if (error) throw error;
+
       setMsg(
         lang === "en"
           ? "Login link sent. Please check your email."
@@ -181,6 +172,7 @@ export default function OfferPage() {
       const file = `Angebotsentwurf_${(brief?.kunde || "Unbenannt")
         .toString()
         .replace(/\s+/g, "_")}.pdf`;
+
       a.href = url;
       a.download = file;
       a.click();
@@ -198,7 +190,7 @@ export default function OfferPage() {
     }
   }
 
-  // Optionen für Price-Section / PDF
+  // Preisoptionen (gehen ins PDF)
   const priceOptions = [
     {
       label: lang === "en" ? "Starter (3 days)" : "Starter (3 WT)",
@@ -219,11 +211,12 @@ export default function OfferPage() {
 
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-6">
-      {/* Kopfzeile mit Sprachumschalter & Navigation */}
+      {/* Kopfzeile mit Navigation + Language Switch */}
       <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">
           {lang === "en" ? "Offer draft" : "Angebots-Entwurf"}
         </h1>
+
         <div className="flex items-center gap-4">
           <div className="hidden sm:flex gap-2">
             <Link
@@ -232,12 +225,14 @@ export default function OfferPage() {
             >
               {lang === "en" ? "Choose roles" : "Rollen wählen"}
             </Link>
+
             <Link
               href={`/brief?lang=${lang}`}
               className="rounded-full border px-3 py-1.5 text-xs sm:text-sm hover:bg-gray-50"
             >
               {lang === "en" ? "Edit briefing" : "Brief bearbeiten"}
             </Link>
+
             <button
               type="button"
               onClick={() => setPreviewOpen((v) => !v)}
@@ -251,34 +246,19 @@ export default function OfferPage() {
                 ? "Open preview"
                 : "Vorschau öffnen"}
             </button>
+
             <button
               type="button"
               onClick={downloadPdf}
-              className="rounded-full border px-3 py-1.5 text-xs sm:text-sm hover:bg-gray-900 hover:text-white"
+              className="rounded-full border px-3 py-1.5 text-xs sm:text-sm hover:bg-gray-900 hover:text-white disabled:opacity-50"
               disabled={saving}
             >
               {lang === "en" ? "Download PDF" : "PDF herunterladen"}
             </button>
           </div>
 
-          {/* Language toggle */}
-          <div className="flex items-center gap-1 text-xs text-gray-600">
-            <button
-              type="button"
-              onClick={() => setLang("de")}
-              className={lang === "de" ? "font-semibold underline" : ""}
-            >
-              DE
-            </button>
-            <span>|</span>
-            <button
-              type="button"
-              onClick={() => setLang("en")}
-              className={lang === "en" ? "font-semibold underline" : ""}
-            >
-              EN
-            </button>
-          </div>
+          {/* Sprachumschalter rechts im Header */}
+          <LanguageSwitcher />
         </div>
       </header>
 
@@ -354,7 +334,7 @@ export default function OfferPage() {
         </div>
       </section>
 
-      {/* Optional: Inline-PDF-Vorschau */}
+      {/* Inline-PDF-Vorschau */}
       {previewOpen && (
         <section className="rounded-xl border p-4 space-y-3">
           <h2 className="font-medium text-sm">
@@ -421,7 +401,9 @@ export default function OfferPage() {
               ? lang === "en"
                 ? "Saving…"
                 : "Speichere…"
-              : t("offer.save")}
+              : lang === "en"
+              ? "Save in my account"
+              : "In meinem Konto speichern"}
           </button>
         )}
 

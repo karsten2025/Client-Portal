@@ -1,6 +1,4 @@
-// app/layout.tsx
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import UnderConstruction from "./components/UnderConstruction";
@@ -18,22 +16,23 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Client Portal",
-  description: "Client portal for offer drafting and collaboration",
+  description: "Offer & briefing workflow",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="de">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <UnderConstruction />
-        {/* Wichtig: useSearchParams im Provider muss unter Suspense hängen */}
-        <Suspense fallback={null}>
-          <LanguageProvider>{children}</LanguageProvider>
-        </Suspense>
+        <LanguageProvider>
+          <UnderConstruction />
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   );

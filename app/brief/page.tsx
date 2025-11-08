@@ -1,218 +1,253 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useLang } from "../LanguageProvider";
+import { useLanguage } from "../lang/LanguageContext";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
 
 type BriefForm = {
-  kunde?: string;
-  ansprechpartner?: string;
-  projekt?: string;
-  ort?: string;
-  zeitraum?: string;
-
-  ziel?: string;
-  hebel?: string;
-
-  anbieterName?: string;
-  anbieterAdresse?: string;
-  anbieterKontakt?: string;
-  anbieterUstId?: string;
-
-  angebotsNr?: string;
-  bindefrist?: string;
+  company?: string;
+  contact?: string;
+  projectTitle?: string;
+  location?: string;
+  period?: string;
+  outcome?: string;
+  levers?: string;
+  senderName?: string;
+  senderAddress?: string;
+  senderContact?: string;
+  senderVatId?: string;
+  offerNumber?: string;
+  offerValidUntil?: string;
 };
 
 type DodChecks = Record<string, boolean>;
-type Raci = Record<string, string>;
+
+type Raci = {
+  owner?: string;
+  approver?: string;
+  helper?: string;
+  consulted?: string;
+};
+
+const DOD_KEYS = [
+  "zielbild",
+  "umsetzungsplan",
+  "risiken",
+  "entscheidungsvorlage",
+];
 
 export default function BriefPage() {
+  const { lang } = useLanguage();
+
   const [form, setForm] = useState<BriefForm>({});
   const [dodChecks, setDodChecks] = useState<DodChecks>({});
   const [raci, setRaci] = useState<Raci>({});
-  const [msg, setMsg] = useState("");
+  const [savedHint, setSavedHint] = useState<string>("");
 
-  const searchParams = useSearchParams();
-  const { lang, setLang } = useLang();
-  const initLangFromUrl = useRef(false);
-
-  // Sprache EINMALIG aus ?lang übernehmen
-  useEffect(() => {
-    if (initLangFromUrl.current) return;
-    initLangFromUrl.current = true;
-
-    const qp = searchParams.get("lang");
-    if (qp === "de" || qp === "en") {
-      setLang(qp);
-    }
-  }, [searchParams, setLang]);
-
-  // Laden aus localStorage
+  // Initial aus localStorage laden
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     try {
-      const parseJson = <T,>(v: string | null, fallback: T): T => {
-        if (!v) return fallback;
-        try {
-          return JSON.parse(v) as T;
-        } catch {
-          return fallback;
-        }
-      };
+      const f = JSON.parse(
+        localStorage.getItem("brief.form") || "{}"
+      ) as BriefForm;
+      const d = JSON.parse(
+        localStorage.getItem("brief.dodChecks") || "{}"
+      ) as DodChecks;
+      const r = JSON.parse(localStorage.getItem("brief.raci") || "{}") as Raci;
 
-      setForm(parseJson<BriefForm>(localStorage.getItem("brief.form"), {}));
-      setDodChecks(
-        parseJson<DodChecks>(localStorage.getItem("brief.dodChecks"), {})
-      );
-      setRaci(parseJson<Raci>(localStorage.getItem("brief.raci"), {}));
+      setForm(f || {});
+      setDodChecks(d || {});
+      setRaci(r || {});
     } catch {
-      // passt, Nutzer kann neu ausfüllen
+      // ignore parse errors
     }
   }, []);
 
-  // Helpers
-  function updateFormField<K extends keyof BriefForm>(
-    key: K,
-    value: BriefForm[K]
-  ) {
-    setForm((prev) => {
-      const next = { ...prev, [key]: value };
-      if (typeof window !== "undefined") {
-        localStorage.setItem("brief.form", JSON.stringify(next));
-      }
-      return next;
-    });
+  // Helper: speichern + kleines Feedback
+  function persistForm(next: BriefForm) {
+    setForm(next);
+    try {
+      localStorage.setItem("brief.form", JSON.stringify(next));
+    } catch {}
+    pingSaved();
   }
 
-  function toggleDod(key: string) {
-    setDodChecks((prev) => {
-      const next = { ...prev, [key]: !prev[key] };
-      if (typeof window !== "undefined") {
-        localStorage.setItem("brief.dodChecks", JSON.stringify(next));
-      }
-      return next;
-    });
+  function persistDod(next: DodChecks) {
+    setDodChecks(next);
+    try {
+      localStorage.setItem("brief.dodChecks", JSON.stringify(next));
+    } catch {}
+    pingSaved();
   }
 
-  function updateRaci(key: string, value: string) {
-    setRaci((prev) => {
-      const next = { ...prev, [key]: value };
-      if (typeof window !== "undefined") {
-        localStorage.setItem("brief.raci", JSON.stringify(next));
-      }
-      return next;
-    });
+  function persistRaci(next: Raci) {
+    setRaci(next);
+    try {
+      localStorage.setItem("brief.raci", JSON.stringify(next));
+    } catch {}
+    pingSaved();
   }
 
-  function flashSaved() {
-    setMsg(
-      lang === "en"
-        ? "Saved locally in this browser."
-        : "Angaben lokal gespeichert."
+  function pingSaved() {
+    setSavedHint(
+      lang === "de" ? "Angaben lokal gespeichert." : "Details saved locally."
     );
-    setTimeout(() => setMsg(""), 1500);
+    setTimeout(() => setSavedHint(""), 1500);
   }
 
-  const dodOptions =
-    lang === "en"
-      ? [
-          "Target picture, scope and boundaries are documented and aligned.",
-          "Implementation roadmap with responsibilities is defined.",
-          "Major risks and assumptions are documented and assessed.",
-          "Decision brief for management / steering body is prepared.",
-        ]
-      : [
-          "Zielbild, Scope und Abgrenzung sind dokumentiert.",
-          "Maßnahmen- / Umsetzungsplan mit Verantwortlichkeiten liegt vor.",
-          "Wesentliche Risiken und Annahmen sind benannt und bewertet.",
-          "Entscheidungsunterlage für Management / Gremium ist vorbereitet.",
-        ];
+  const t =
+    lang === "de"
+      ? {
+          title: "Projekt-Briefing",
+          intro:
+            "Die folgenden Angaben fließen direkt in den Angebotsentwurf auf /offer ein (inkl. PDF). Alles wird nur lokal gespeichert, bis Sie sich entscheiden, es in Ihrem Konto abzulegen.",
+          sec1: "1. Kunde & Projekt",
+          company: "Auftraggeber (Unternehmen / Organisation)",
+          contact: "Ansprechpartner:in beim Auftraggeber",
+          projectTitle: "Projektbezeichnung",
+          location: "Einsatzort / Remote",
+          period: "Gewünschter Zeitraum / Start",
+          sec2: "2. Ergebnisbild & wichtigste Hebel",
+          outcomeLabel: "Ergebnis (so sieht „fertig“ aus – nach 5 Werktagen)",
+          leversLabel: "Wichtigste Hebel / Fokusthemen",
+          sec3: "3. Absender für das Angebot",
+          senderHint:
+            "Diese Angaben erscheinen im Kopf des Angebots-PDF. Wenn leer, werden Platzhalter verwendet.",
+          senderName: "Ihr Name / Unternehmen",
+          senderAddress: "Adresse",
+          senderContact: "Kontakt (E-Mail / Telefon / Web)",
+          senderVatId: "USt-IdNr. (falls vorhanden)",
+          offerNumber: "Interne Angebots-Nr. (optional)",
+          offerValidUntil: "Bindefrist des Angebots",
+          sec4: "4. Definition of Done (Auszug)",
+          dodIntro:
+            "Wählen Sie, woran wir gemeinsam messen, ob die fünf Tage erfolgreich waren. Diese Punkte erscheinen im Angebot. Abgerechnet werden die vereinbarten und erbrachten Leistungen.",
+          dodItems: [
+            "Zielbild, Scope und Abgrenzung sind dokumentiert und abgestimmt.",
+            "Maßnahmen- / Umsetzungsplan mit Verantwortlichkeiten liegt vor.",
+            "Wesentliche Risiken und Annahmen sind benannt und bewertet.",
+            "Entscheidungsunterlage für Management / Gremium ist vorbereitet.",
+          ],
+          sec5: "5. Rollen (Mini-RACI)",
+          raciIntro:
+            "Optional: Wer ist verantwortlich, wer entscheidet, wer wird eingebunden? Kurzfassung reicht – sie erscheint als Übersicht im Angebot.",
+          owner: "Owner (verantwortlich für Ergebnis)",
+          approver: "Approver (entscheidet final)",
+          helper: "Helper (arbeitet aktiv mit)",
+          consulted: "Consulted (muss gehört werden)",
+          back: "Zurück: Rollen wählen",
+          next: "Weiter: Angebots-Entwurf",
+          save: "Angaben speichern",
+        }
+      : {
+          title: "Project briefing",
+          intro:
+            "Your inputs here flow directly into the offer draft and PDF. Data stays local until you decide to save it to your account.",
+          sec1: "1. Client & project",
+          company: "Client (company / organization)",
+          contact: "Contact person",
+          projectTitle: "Project title",
+          location: "Location / remote",
+          period: "Desired period / start",
+          sec2: "2. Outcome & key levers",
+          outcomeLabel:
+            "Outcome (what should be clear/decided/completed after 5 days?)",
+          leversLabel: "Key levers / focus topics",
+          sec3: "3. Sender details for the offer",
+          senderHint:
+            "These details appear in the offer PDF header. If left empty, neutral placeholders are used.",
+          senderName: "Your name / company",
+          senderAddress: "Address",
+          senderContact: "Contact (email / phone / web)",
+          senderVatId: "VAT ID (if applicable)",
+          offerNumber: "Internal offer no. (optional)",
+          offerValidUntil: "Binding period of the offer",
+          sec4: "4. Definition of Done (selection)",
+          dodIntro:
+            "Select what we use as shared orientation for a good result. These points appear in the offer. Billing is based on agreed and delivered services, not internal approval of criteria.",
+          dodItems: [
+            "Target picture, scope and boundaries are documented and aligned.",
+            "Implementation roadmap with responsibilities is defined.",
+            "Major risks and assumptions are documented and assessed.",
+            "Decision brief for management / steering body is prepared.",
+          ],
+          sec5: "5. Roles (mini-RACI)",
+          raciIntro:
+            "Optional: Who owns the outcome, who decides, who helps, who must be consulted? Short version is enough – it appears as overview in the offer.",
+          owner: "Owner (accountable for outcome)",
+          approver: "Approver (final decision)",
+          helper: "Helper (actively involved)",
+          consulted: "Consulted (must be heard)",
+          back: "Back: Choose roles",
+          next: "Next: Offer draft",
+          save: "Save briefing",
+        };
 
   return (
-    <main className="max-w-3xl mx-auto p-6 space-y-8">
-      {/* Kopf mit Sprachumschalter */}
+    <main className="max-w-5xl mx-auto p-6 space-y-8">
+      {/* Header */}
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">
-            {lang === "en" ? "Project briefing" : "Projekt-Briefing"}
-          </h1>
-          <p className="text-sm text-gray-700">
-            {lang === "en"
-              ? "Your inputs here flow directly into the offer draft and PDF. Data stays local until you choose to save it to your account."
-              : "Die folgenden Angaben fließen direkt in den Angebotsentwurf und das PDF. Alles bleibt lokal, bis Sie es bewusst in Ihrem Konto speichern."}
-          </p>
+          <h1 className="text-2xl font-semibold">{t.title}</h1>
+          <p className="text-sm text-gray-600">{t.intro}</p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-gray-600">
-          <button
-            type="button"
-            onClick={() => setLang("de")}
-            className={lang === "de" ? "font-semibold underline" : ""}
-          >
-            DE
-          </button>
-          <span>|</span>
-          <button
-            type="button"
-            onClick={() => setLang("en")}
-            className={lang === "en" ? "font-semibold underline" : ""}
-          >
-            EN
-          </button>
-        </div>
+        <LanguageSwitcher />
       </header>
 
       {/* 1. Client & project */}
-      <section className="rounded-xl border p-4 space-y-3">
-        <h2 className="font-medium text-lg">
-          {lang === "en" ? "1. Client & project" : "1. Kunde & Projekt"}
-        </h2>
+      <section className="rounded-2xl border p-5 space-y-4">
+        <h2 className="font-semibold">{t.sec1}</h2>
 
-        <div className="space-y-2">
-          <label className="text-sm block">
-            {lang === "en"
-              ? "Client (company / organization)"
-              : "Auftraggeber (Unternehmen / Organisation)"}
+        <div>
+          <label className="block text-xs text-gray-600 mb-1">
+            {t.company}
           </label>
           <input
             className="w-full border rounded-lg p-2 text-sm"
-            value={form.kunde || ""}
-            onChange={(e) => updateFormField("kunde", e.target.value)}
+            value={form.company || ""}
+            onChange={(e) => persistForm({ ...form, company: e.target.value })}
             placeholder={
-              lang === "en" ? "e.g. Example GmbH" : "z. B. Beispiel GmbH"
+              lang === "de" ? "z. B. Beispiel GmbH" : "e.g. Example GmbH"
             }
           />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label className="text-sm block">
-              {lang === "en"
-                ? "Contact person"
-                : "Ansprechpartner:in beim Auftraggeber"}
+            <label className="block text-xs text-gray-600 mb-1">
+              {t.contact}
             </label>
             <input
               className="w-full border rounded-lg p-2 text-sm"
-              value={form.ansprechpartner || ""}
+              value={form.contact || ""}
               onChange={(e) =>
-                updateFormField("ansprechpartner", e.target.value)
+                persistForm({ ...form, contact: e.target.value })
               }
-              placeholder={lang === "en" ? "Name, role" : "Name, Funktion"}
+              placeholder={
+                lang === "de" ? "Name, Funktion" : "Name, role / position"
+              }
             />
           </div>
           <div>
-            <label className="text-sm block">
-              {lang === "en" ? "Project title" : "Projektbezeichnung"}
+            <label className="block text-xs text-gray-600 mb-1">
+              {t.projectTitle}
             </label>
             <input
               className="w-full border rounded-lg p-2 text-sm"
-              value={form.projekt || ""}
-              onChange={(e) => updateFormField("projekt", e.target.value)}
+              value={form.projectTitle || ""}
+              onChange={(e) =>
+                persistForm({
+                  ...form,
+                  projectTitle: e.target.value,
+                })
+              }
               placeholder={
-                lang === "en"
-                  ? "e.g. Implementation XY / realignment Z"
-                  : "z. B. Einführung XY / Neuausrichtung Z"
+                lang === "de"
+                  ? "z. B. Einführung XY / Neuausrichtung Z"
+                  : "e.g. Implementation XY / realignment Z"
               }
             />
           </div>
@@ -220,34 +255,34 @@ export default function BriefPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label className="text-sm block">
-              {lang === "en" ? "Location / remote" : "Einsatzort / Remote"}
+            <label className="block text-xs text-gray-600 mb-1">
+              {t.location}
             </label>
             <input
               className="w-full border rounded-lg p-2 text-sm"
-              value={form.ort || ""}
-              onChange={(e) => updateFormField("ort", e.target.value)}
+              value={form.location || ""}
+              onChange={(e) =>
+                persistForm({ ...form, location: e.target.value })
+              }
               placeholder={
-                lang === "en"
-                  ? "e.g. Munich & remote"
-                  : "z. B. München & Remote"
+                lang === "de"
+                  ? "z. B. München & Remote"
+                  : "e.g. Munich & remote"
               }
             />
           </div>
           <div>
-            <label className="text-sm block">
-              {lang === "en"
-                ? "Desired period / start"
-                : "Gewünschter Zeitraum / Start"}
+            <label className="block text-xs text-gray-600 mb-1">
+              {t.period}
             </label>
             <input
               className="w-full border rounded-lg p-2 text-sm"
-              value={form.zeitraum || ""}
-              onChange={(e) => updateFormField("zeitraum", e.target.value)}
+              value={form.period || ""}
+              onChange={(e) => persistForm({ ...form, period: e.target.value })}
               placeholder={
-                lang === "en"
-                  ? "e.g. Q3–Q4 / from CW 35"
-                  : "z. B. Q3–Q4 / Start ab KW 35"
+                lang === "de"
+                  ? "z. B. Q3–Q4 / Start ab KW 35"
+                  : "e.g. Q3–Q4 / from CW 35"
               }
             />
           </div>
@@ -255,157 +290,130 @@ export default function BriefPage() {
       </section>
 
       {/* 2. Outcome & key levers */}
-      <section className="rounded-xl border p-4 space-y-3">
-        <h2 className="font-medium text-lg">
-          {lang === "en"
-            ? "2. Outcome & key levers"
-            : "2. Ergebnisbild & wichtigste Hebel"}
-        </h2>
+      <section className="rounded-2xl border p-5 space-y-3">
+        <h2 className="font-semibold">{t.sec2}</h2>
 
-        <div className="space-y-2">
-          <label className="text-sm block">
-            {lang === "en"
-              ? "Outcome (what should be clear/decided/completed after 5 days?)"
-              : "Ergebnis (so sieht „fertig“ aus)"}
+        <div>
+          <label className="block text-xs text-gray-600 mb-1">
+            {t.outcomeLabel}
           </label>
           <textarea
-            className="w-full border rounded-lg p-2 text-sm"
-            rows={3}
-            value={form.ziel || ""}
-            onChange={(e) => updateFormField("ziel", e.target.value)}
-            placeholder={
-              lang === "en"
-                ? "What should be clarified, decided or documented after 5 working days?"
-                : "Was soll nach 5 Werktagen klar, entschieden oder dokumentiert sein?"
-            }
+            className="w-full border rounded-lg p-2 text-sm min-h-[96px]"
+            value={form.outcome || ""}
+            onChange={(e) => persistForm({ ...form, outcome: e.target.value })}
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm block">
-            {lang === "en" ? "Key levers" : "Wichtigste Hebel"}
+        <div>
+          <label className="block text-xs text-gray-600 mb-1">
+            {t.leversLabel}
           </label>
           <textarea
-            className="w-full border rounded-lg p-2 text-sm"
-            rows={3}
-            value={form.hebel || ""}
-            onChange={(e) => updateFormField("hebel", e.target.value)}
-            placeholder={
-              lang === "en"
-                ? "What do we actually move? (e.g. lead time, quality, clarity, alignment …)"
-                : "Woran drehen wir konkret? (z. B. Durchlaufzeit, Qualität, Schnittstellen, Klarheit im Team …)"
-            }
+            className="w-full border rounded-lg p-2 text-sm min-h-[72px]"
+            value={form.levers || ""}
+            onChange={(e) => persistForm({ ...form, levers: e.target.value })}
           />
         </div>
       </section>
 
-      {/* 3. Sender details */}
-      <section className="rounded-xl border p-4 space-y-3">
-        <h2 className="font-medium text-lg">
-          {lang === "en"
-            ? "3. Sender details for the offer"
-            : "3. Absender für das Angebot"}
-        </h2>
-        <p className="text-xs text-gray-600">
-          {lang === "en"
-            ? "These details appear in the offer PDF header. If left empty, neutral placeholders are used."
-            : "Diese Angaben erscheinen im Kopf des Angebots-PDF. Wenn leer, werden neutrale Platzhalter verwendet."}
-        </p>
+      {/* 3. Sender */}
+      <section className="rounded-2xl border p-5 space-y-3">
+        <h2 className="font-semibold">{t.sec3}</h2>
+        <p className="text-xs text-gray-500">{t.senderHint}</p>
 
-        <div className="space-y-2">
-          <label className="text-sm block">
-            {lang === "en" ? "Your name / company" : "Ihr Name / Unternehmen"}
+        <div>
+          <label className="block text-xs text-gray-600 mb-1">
+            {t.senderName}
           </label>
           <input
             className="w-full border rounded-lg p-2 text-sm"
-            value={form.anbieterName || ""}
-            onChange={(e) => updateFormField("anbieterName", e.target.value)}
-            placeholder={
-              lang === "en"
-                ? "e.g. Max Mustermann / Mustermann Consulting"
-                : "z. B. Max Mustermann / Mustermann Consulting"
+            value={form.senderName || ""}
+            onChange={(e) =>
+              persistForm({
+                ...form,
+                senderName: e.target.value,
+              })
             }
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm block">
-            {lang === "en" ? "Address" : "Adresse"}
+        <div>
+          <label className="block text-xs text-gray-600 mb-1">
+            {t.senderAddress}
           </label>
           <textarea
-            className="w-full border rounded-lg p-2 text-sm"
-            rows={2}
-            value={form.anbieterAdresse || ""}
-            onChange={(e) => updateFormField("anbieterAdresse", e.target.value)}
-            placeholder={
-              lang === "en" ? "Street, ZIP, City" : "Straße, PLZ, Ort"
+            className="w-full border rounded-lg p-2 text-sm min-h-[60px]"
+            value={form.senderAddress || ""}
+            onChange={(e) =>
+              persistForm({
+                ...form,
+                senderAddress: e.target.value,
+              })
             }
           />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label className="text-sm block">
-              {lang === "en"
-                ? "Contact (email / phone / web)"
-                : "Kontakt (E-Mail / Telefon / Web)"}
+            <label className="block text-xs text-gray-600 mb-1">
+              {t.senderContact}
             </label>
             <input
               className="w-full border rounded-lg p-2 text-sm"
-              value={form.anbieterKontakt || ""}
+              value={form.senderContact || ""}
               onChange={(e) =>
-                updateFormField("anbieterKontakt", e.target.value)
-              }
-              placeholder={
-                lang === "en"
-                  ? "e.g. mail@..., +49..., www..."
-                  : "z. B. mail@..., +49..., www..."
+                persistForm({
+                  ...form,
+                  senderContact: e.target.value,
+                })
               }
             />
           </div>
           <div>
-            <label className="text-sm block">
-              {lang === "en"
-                ? "VAT ID (if applicable)"
-                : "USt-IdNr. (falls vorhanden)"}
+            <label className="block text-xs text-gray-600 mb-1">
+              {t.senderVatId}
             </label>
             <input
               className="w-full border rounded-lg p-2 text-sm"
-              value={form.anbieterUstId || ""}
-              onChange={(e) => updateFormField("anbieterUstId", e.target.value)}
-              placeholder={lang === "en" ? "VAT ID" : "DE..."}
+              value={form.senderVatId || ""}
+              onChange={(e) =>
+                persistForm({
+                  ...form,
+                  senderVatId: e.target.value,
+                })
+              }
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label className="text-sm block">
-              {lang === "en"
-                ? "Internal offer no. (optional)"
-                : "Interne Angebots-Nr. (optional)"}
+            <label className="block text-xs text-gray-600 mb-1">
+              {t.offerNumber}
             </label>
             <input
               className="w-full border rounded-lg p-2 text-sm"
-              value={form.angebotsNr || ""}
-              onChange={(e) => updateFormField("angebotsNr", e.target.value)}
-              placeholder={
-                lang === "en" ? "Shown in the PDF" : "wird im PDF angezeigt"
+              value={form.offerNumber || ""}
+              onChange={(e) =>
+                persistForm({
+                  ...form,
+                  offerNumber: e.target.value,
+                })
               }
             />
           </div>
           <div>
-            <label className="text-sm block">
-              {lang === "en"
-                ? "Binding period of the offer"
-                : "Bindefrist des Angebots"}
+            <label className="block text-xs text-gray-600 mb-1">
+              {t.offerValidUntil}
             </label>
             <input
               className="w-full border rounded-lg p-2 text-sm"
-              value={form.bindefrist || ""}
-              onChange={(e) => updateFormField("bindefrist", e.target.value)}
-              placeholder={
-                lang === "en" ? "e.g. 30.09.2025" : "z. B. 30.09.2025"
+              value={form.offerValidUntil || ""}
+              onChange={(e) =>
+                persistForm({
+                  ...form,
+                  offerValidUntil: e.target.value,
+                })
               }
             />
           </div>
@@ -413,125 +421,112 @@ export default function BriefPage() {
       </section>
 
       {/* 4. Definition of Done */}
-      <section className="rounded-xl border p-4 space-y-3">
-        <h2 className="text-lg font-medium">
-          {lang === "en"
-            ? "4. Definition of Done (selection)"
-            : "4. Definition of Done (Auszug)"}
-        </h2>
-        <p className="text-xs text-gray-600">
-          {lang === "en"
-            ? "Select what we use as shared orientation for a good result. These points appear in the offer. Billing is based on agreed and delivered services, not on internal approval of criteria."
-            : "Wählen Sie, woran wir ein fachlich sauberes Ergebnis messen. Diese Punkte erscheinen im Angebot. Die Vergütung richtet sich nach den vereinbarten und erbrachten Leistungen, nicht nach der formalen Freigabe einzelner Punkte."}
-        </p>
+      <section className="rounded-2xl border p-5 space-y-3">
+        <h2 className="font-semibold">{t.sec4}</h2>
+        <p className="text-xs text-gray-500">{t.dodIntro}</p>
 
-        {dodOptions.map((label) => (
-          <label key={label} className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={!!dodChecks[label]}
-              onChange={() => toggleDod(label)}
-            />
-            <span>{label}</span>
-          </label>
-        ))}
+        {t.dodItems.map((label, idx) => {
+          const key = DOD_KEYS[idx];
+          const checked = !!dodChecks[key];
+          return (
+            <label
+              key={key}
+              className="flex items-start gap-2 text-sm text-gray-800"
+            >
+              <input
+                type="checkbox"
+                className="mt-1"
+                checked={checked}
+                onChange={(e) =>
+                  persistDod({
+                    ...dodChecks,
+                    [key]: e.target.checked,
+                  })
+                }
+              />
+              <span>{label}</span>
+            </label>
+          );
+        })}
       </section>
 
       {/* 5. Rollen (Mini-RACI) */}
-      <section className="rounded-xl border p-4 space-y-3">
-        <h2 className="text-lg font-medium">
-          {lang === "en" ? "5. Roles (mini RACI)" : "5. Rollen (Mini-RACI)"}
-        </h2>
-        <p className="text-xs text-gray-600">
-          {lang === "en"
-            ? "Optional: Short overview of who owns what. It will be shown in the offer."
-            : "Optional: Wer ist verantwortlich, wer entscheidet, wer wird eingebunden? Kurzfassung reicht – sie landet als Übersicht im Angebot."}
-        </p>
+      <section className="rounded-2xl border p-5 space-y-3">
+        <h2 className="font-semibold">{t.sec5}</h2>
+        <p className="text-xs text-gray-500">{t.raciIntro}</p>
 
-        <div className="space-y-2">
-          <label className="text-sm block">
-            {lang === "en"
-              ? "Owner (accountable for result)"
-              : "Owner (verantwortlich für Ergebnis)"}
-          </label>
+        <div>
+          <label className="block text-xs text-gray-600 mb-1">{t.owner}</label>
           <input
             className="w-full border rounded-lg p-2 text-sm"
-            value={raci.Owner || ""}
-            onChange={(e) => updateRaci("Owner", e.target.value)}
-            placeholder={lang === "en" ? "Name / role" : "Name / Rolle"}
+            value={raci.owner || ""}
+            onChange={(e) => persistRaci({ ...raci, owner: e.target.value })}
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm block">
-            {lang === "en"
-              ? "Approver (final decision)"
-              : "Approver (entscheidet final)"}
+        <div>
+          <label className="block text-xs text-gray-600 mb-1">
+            {t.approver}
           </label>
           <input
             className="w-full border rounded-lg p-2 text-sm"
-            value={raci.Approver || ""}
-            onChange={(e) => updateRaci("Approver", e.target.value)}
-            placeholder={lang === "en" ? "Name / role" : "Name / Rolle"}
+            value={raci.approver || ""}
+            onChange={(e) => persistRaci({ ...raci, approver: e.target.value })}
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm block">
-            {lang === "en"
-              ? "Helper (active contributors)"
-              : "Helper (arbeitet aktiv mit)"}
-          </label>
+        <div>
+          <label className="block text-xs text-gray-600 mb-1">{t.helper}</label>
           <input
             className="w-full border rounded-lg p-2 text-sm"
-            value={raci.Helper || ""}
-            onChange={(e) => updateRaci("Helper", e.target.value)}
-            placeholder={
-              lang === "en"
-                ? "Names / roles, comma-separated"
-                : "Namen / Rollen, kommasepariert"
-            }
+            value={raci.helper || ""}
+            onChange={(e) => persistRaci({ ...raci, helper: e.target.value })}
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm block">
-            {lang === "en"
-              ? "Consulted (must be heard)"
-              : "Consulted (muss gehört werden)"}
+        <div>
+          <label className="block text-xs text-gray-600 mb-1">
+            {t.consulted}
           </label>
           <input
             className="w-full border rounded-lg p-2 text-sm"
-            value={raci.Consulted || ""}
-            onChange={(e) => updateRaci("Consulted", e.target.value)}
-            placeholder={
-              lang === "en" ? "Names / functions" : "Namen / Funktionen"
+            value={raci.consulted || ""}
+            onChange={(e) =>
+              persistRaci({ ...raci, consulted: e.target.value })
             }
           />
         </div>
       </section>
 
-      {/* Footer */}
-      <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-gray-600">
-        <div className="flex items-center gap-2">
+      {/* Footer Navigation */}
+      <section className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pt-2">
+        <div className="flex items-center gap-3">
+          <Link
+            href={`/explore?lang=${lang}`}
+            className="text-sm text-gray-700 underline underline-offset-4"
+          >
+            {t.back}
+          </Link>
+          {savedHint && (
+            <span className="text-xs text-emerald-600">{savedHint}</span>
+          )}
+        </div>
+        <div className="flex gap-3">
           <button
             type="button"
-            className="border rounded-lg px-3 py-1.5"
-            onClick={flashSaved}
+            onClick={pingSaved}
+            className="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50"
           >
-            {lang === "en" ? "Save locally" : "Angaben speichern"}
+            {t.save}
           </button>
-          {msg && <span>{msg}</span>}
+          <Link
+            href={`/offer?lang=${lang}`}
+            className="rounded-lg bg-black text-white px-4 py-2 text-sm"
+          >
+            {t.next}
+          </Link>
         </div>
-        <Link
-          href={`/offer?lang=${lang}`}
-          className="rounded-lg border px-3 py-1.5 text-xs font-medium"
-        >
-          {lang === "en"
-            ? "Continue to offer draft"
-            : "Weiter zum Angebotsentwurf"}
-        </Link>
-      </div>
+      </section>
     </main>
   );
 }
