@@ -14,7 +14,7 @@ export default function UnderConstruction() {
   function close() {
     setOpen(false);
     try {
-      localStorage.setItem("uc.dismissed", "1");
+      localStorage.setItem("uc.v2.dismissed", "1");
     } catch {}
   }
 
