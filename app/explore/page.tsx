@@ -53,9 +53,9 @@ const TEXT: Record<
     },
     cards: {
       sys: {
-        title: "Ganzheitliche Erfolgssteuerung",
+        title: "Ganzheitliche Erfolgssteuerung (Interim Management)",
         blurb:
-          "Ich orchestriere Ihre Initiativen über Produkt, Portfolio, Programm und Projekt, mit dem passenden Vorgehen (prädiktiv, hybrid, agil). Ziel: Investitionen zahlen klar auf Strategie und Wert ein.",
+          "Ich übernehme die Verantwortung für Ihre Management-Aufgaben – sei es in der Linie (als temporäre Abteilungsleitung) oder im strategischen Portfolio (Produkt, Programm, Projekt) – und bringe Ihre Einheiten auf Kurs.",
       },
       ops: {
         title: "Betriebssystem Performer",
@@ -89,9 +89,9 @@ const TEXT: Record<
     },
     cards: {
       sys: {
-        title: "Holistic delivery steering",
+        title: "Holistic delivery steering (Interim Management)",
         blurb:
-          "I orchestrate initiatives across product, portfolio, program and projects using the most effective delivery mode. Investments align with strategy and measurable value.",
+          "I take full responsibility for your management mandates—whether in line management (as an interim Head of Department) or steering your strategic portfolio (product, program, project)—and get your units back on course.",
       },
       ops: {
         title: "Operating system performance",
