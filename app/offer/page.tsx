@@ -1,3 +1,4 @@
+// app/offer/page.tsx
 "use client";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,8 @@ import { ProcessBar } from "../components/ProcessBar";
 import { PDFViewer, pdf } from "@react-pdf/renderer";
 import { OfferPdf } from "../components/OfferPdf";
 
+import { BEHAVIORS, SKILLS, LOCAL_KEYS, Lang } from "../lib/catalog";
+
 type Brief = Record<string, any>;
 const DAY_RATE = 2000;
 
@@ -23,6 +26,24 @@ export default function OfferPage() {
   const [roles, setRoles] = useState<string[]>([]);
   const [days, setDays] = useState<number>(5);
 
+  // abgeleitete Inhalte aus Briefing (Behavior + Skills)
+  const [behaviorResolved, setBehaviorResolved] = useState<{
+    ctx: string;
+    pkg: string;
+    style: string;
+    outcome: string;
+  } | null>(null);
+
+  const [skillsResolved, setSkillsResolved] = useState<
+    {
+      id: string;
+      title: string;
+      offer: string;
+      need?: string;
+      outcome?: string;
+    }[]
+  >([]);
+
   // Session / Aktionen
   const [sessionUser, setSessionUser] = useState<any>(null);
   const [email, setEmail] = useState("");
@@ -31,6 +52,7 @@ export default function OfferPage() {
   const [previewOpen, setPreviewOpen] = useState(false);
 
   const { lang } = useLanguage();
+  const L: Lang = (lang as Lang) || "de";
   const total = useMemo(() => days * DAY_RATE, [days]);
 
   // Supabase-Session beobachten
@@ -44,7 +66,7 @@ export default function OfferPage() {
     return () => sub.data?.subscription?.unsubscribe();
   }, []);
 
-  // Lokale Daten (Brief & Rollen) laden
+  // Lokale Daten (Brief & Rollen) laden + Behavior/Skills auflösen
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -66,21 +88,66 @@ export default function OfferPage() {
         localStorage.getItem("brief.selected"),
         []
       );
-      const dodChecks = parseJson<Record<string, boolean>>(
-        localStorage.getItem("brief.dodChecks"),
-        {}
-      );
-      const raci = parseJson<Record<string, string>>(
-        localStorage.getItem("brief.raci"),
-        {}
-      );
 
-      setBrief({ ...form, dodChecks, raci });
+      setBrief(form);
       setRoles(Array.isArray(selected) ? selected : []);
     } catch {
-      // wenn lokal etwas korrupt ist: Seite bleibt nutzbar
+      /* tolerant */
     }
-  }, []);
+
+    // **NEU – Verhalten + Skills**
+    try {
+      const behaviorId = localStorage.getItem(LOCAL_KEYS.behavior) || "";
+      if (behaviorId) {
+        const b = BEHAVIORS.find((x) => x.id === behaviorId);
+        if (b) {
+          setBehaviorResolved({
+            ctx: b.ctx[L],
+            pkg: b.pkg[L],
+            style: b.style[L],
+            outcome: b.outcome[L],
+          });
+        } else {
+          setBehaviorResolved(null);
+        }
+      } else {
+        setBehaviorResolved(null);
+      }
+
+      const skillIds = parseJson<string[]>(
+        localStorage.getItem(LOCAL_KEYS.skills),
+        []
+      );
+      const notes = parseJson<
+        Record<string, { need?: string; outcome?: string }>
+      >(localStorage.getItem(LOCAL_KEYS.notes), {});
+
+      const resolved = (skillIds || [])
+        .map((id) => {
+          const s = SKILLS.find((x) => x.id === id);
+          if (!s) return null;
+          return {
+            id,
+            title: s.title[L],
+            offer: s.offerShort[L],
+            need: notes?.[id]?.need || "",
+            outcome: notes?.[id]?.outcome || "",
+          };
+        })
+        .filter(Boolean) as {
+        id: string;
+        title: string;
+        offer: string;
+        need?: string;
+        outcome?: string;
+      }[];
+
+      setSkillsResolved(resolved);
+    } catch {
+      setBehaviorResolved(null);
+      setSkillsResolved([]);
+    }
+  }, [L]);
 
   // Change-Log vorbereiten
   function buildChanges(): Change[] {
@@ -99,18 +166,13 @@ export default function OfferPage() {
     try {
       setSaving(true);
       setMsg("");
-
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/portal`,
-        },
+        options: { emailRedirectTo: `${window.location.origin}/portal` },
       });
-
       if (error) throw error;
-
       setMsg(
-        lang === "en"
+        L === "en"
           ? "Login link sent. Please check your email."
           : "Login-Link gesendet. Bitte E-Mail prüfen."
       );
@@ -126,7 +188,6 @@ export default function OfferPage() {
     try {
       setSaving(true);
       setMsg("");
-
       const res = await persistOfferV1(supabase, {
         brief,
         selectedRoles: roles,
@@ -134,12 +195,10 @@ export default function OfferPage() {
         dayRate: DAY_RATE,
         changes: buildChanges(),
       });
-
       const briefId = (res as any).briefId ?? (res as any).brief_id ?? "—";
       const offerId = (res as any).offerId ?? (res as any).offer_id ?? "—";
-
       setMsg(
-        (lang === "en" ? "Saved: Brief " : "Gespeichert: Brief ") +
+        (L === "en" ? "Saved: Brief " : "Gespeichert: Brief ") +
           briefId +
           ", Offer " +
           offerId
@@ -156,7 +215,6 @@ export default function OfferPage() {
     try {
       setSaving(true);
       setMsg("");
-
       const blob = await pdf(
         <OfferPdf
           brief={brief}
@@ -164,7 +222,9 @@ export default function OfferPage() {
           days={days}
           dayRate={DAY_RATE}
           total={total}
-          lang={lang}
+          lang={L}
+          behavior={behaviorResolved}
+          skills={skillsResolved}
         />
       ).toBlob();
 
@@ -173,14 +233,13 @@ export default function OfferPage() {
       const file = `Angebotsentwurf_${(brief?.kunde || "Unbenannt")
         .toString()
         .replace(/\s+/g, "_")}.pdf`;
-
       a.href = url;
       a.download = file;
       a.click();
       URL.revokeObjectURL(url);
 
       setMsg(
-        lang === "en"
+        L === "en"
           ? "PDF downloaded (non-binding draft)."
           : "PDF heruntergeladen (unverbindlicher Entwurf)."
       );
@@ -191,20 +250,20 @@ export default function OfferPage() {
     }
   }
 
-  // Preisoptionen (gehen ins PDF)
+  // Preisoptionen (gehen ins PDF – optional)
   const priceOptions = [
     {
-      label: lang === "en" ? "Starter (3 days)" : "Starter (3 WT)",
+      label: L === "en" ? "Starter (3 days)" : "Starter (3 WT)",
       days: 3,
       total: 3 * DAY_RATE,
     },
     {
-      label: lang === "en" ? "Core (5 days)" : "Kern (5 WT)",
+      label: L === "en" ? "Core (5 days)" : "Kern (5 WT)",
       days: 5,
       total: 5 * DAY_RATE,
     },
     {
-      label: lang === "en" ? "Plus (8 days)" : "Plus (8 WT)",
+      label: L === "en" ? "Plus (8 days)" : "Plus (8 WT)",
       days: 8,
       total: 8 * DAY_RATE,
     },
@@ -212,116 +271,76 @@ export default function OfferPage() {
 
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-6">
-      {/* Header mit Navigation + Language Switch */}
+      {/* Header */}
       <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">
-          {lang === "en" ? "Offer draft" : "Angebots-Entwurf"}
+          {L === "en" ? "Offer draft" : "Angebots-Entwurf"}
         </h1>
-
         <div className="flex items-center gap-4">
           <div className="hidden sm:flex gap-2">
             <Link
-              href={`/explore?lang=${lang}`}
+              href={`/explore?lang=${L}`}
               className="rounded-full border px-3 py-1.5 text-xs sm:text-sm hover:bg-gray-50"
             >
-              {lang === "en" ? "Choose roles" : "Rollen wählen"}
+              {L === "en" ? "Choose roles" : "Rollen wählen"}
             </Link>
-
             <Link
-              href={`/brief?lang=${lang}`}
+              href={`/brief?lang=${L}`}
               className="rounded-full border px-3 py-1.5 text-xs sm:text-sm hover:bg-gray-50"
             >
-              {lang === "en" ? "Edit briefing" : "Brief bearbeiten"}
+              {L === "en" ? "Edit briefing" : "Brief bearbeiten"}
             </Link>
-
             <button
               type="button"
               onClick={() => setPreviewOpen((v) => !v)}
               className="rounded-full border px-3 py-1.5 text-xs sm:text-sm hover:bg-gray-50"
             >
               {previewOpen
-                ? lang === "en"
+                ? L === "en"
                   ? "Close preview"
                   : "Vorschau schließen"
-                : lang === "en"
+                : L === "en"
                 ? "Open preview"
                 : "Vorschau öffnen"}
             </button>
-
             <button
               type="button"
               onClick={downloadPdf}
               className="rounded-full border px-3 py-1.5 text-xs sm:text-sm hover:bg-gray-900 hover:text-white disabled:opacity-50"
               disabled={saving}
             >
-              {lang === "en" ? "Download PDF" : "PDF herunterladen"}
+              {L === "en" ? "Download PDF" : "PDF herunterladen"}
             </button>
           </div>
-
           <LanguageSwitcher />
         </div>
       </header>
 
-      {/* Prozessvisualisierung */}
+      {/* Prozess */}
       <ProcessBar current="offer" />
 
       {/* Zusammenfassung */}
       <section className="rounded-xl border p-4 space-y-3">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
           <div>
-            <b>{lang === "en" ? "Roles:" : "Rollen:"}</b>{" "}
+            <b>{L === "en" ? "Roles:" : "Rollen:"}</b>{" "}
             {roles.length ? roles.join(", ") : "—"}
           </div>
           <div>
-            <b>{lang === "en" ? "Days:" : "Tage:"}</b> {days}
+            <b>{L === "en" ? "Days:" : "Tage:"}</b> {days}
           </div>
           <div>
-            <b>{lang === "en" ? "Rate/day:" : "Satz/Tag:"}</b>{" "}
-            {DAY_RATE.toLocaleString(lang === "en" ? "en-US" : "de-DE")} €
+            <b>{L === "en" ? "Rate/day:" : "Satz/Tag:"}</b>{" "}
+            {DAY_RATE.toLocaleString(L === "en" ? "en-US" : "de-DE")} €
           </div>
           <div>
-            <b>{lang === "en" ? "Total:" : "Summe:"}</b>{" "}
-            {total.toLocaleString(lang === "en" ? "en-US" : "de-DE")} €
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-          <div>
-            <label className="block font-medium mb-1">
-              {lang === "en"
-                ? "Outcome (as drafted)"
-                : "Ergebnis (so sieht „fertig“ aus)"}
-            </label>
-            <input
-              disabled
-              className="w-full border rounded-lg p-2 bg-gray-50"
-              value={brief?.ziel || ""}
-              placeholder={
-                lang === "en"
-                  ? "Taken from your briefing."
-                  : "Übernommen aus Ihrem Briefing."
-              }
-            />
-          </div>
-          <div>
-            <label className="block font-medium mb-1">
-              {lang === "en" ? "Key lever" : "Wichtigster Hebel"}
-            </label>
-            <input
-              disabled
-              className="w-full border rounded-lg p-2 bg-gray-50"
-              value={brief?.hebel || ""}
-              placeholder={
-                lang === "en"
-                  ? "Taken from your briefing."
-                  : "Übernommen aus Ihrem Briefing."
-              }
-            />
+            <b>{L === "en" ? "Total:" : "Summe:"}</b>{" "}
+            {total.toLocaleString(L === "en" ? "en-US" : "de-DE")} €
           </div>
         </div>
 
         <div className="flex items-center gap-3 pt-2 text-sm">
-          <span>{lang === "en" ? "Days:" : "Tage:"}</span>
+          <span>{L === "en" ? "Days:" : "Tage:"}</span>
           <input
             type="number"
             min={1}
@@ -330,7 +349,7 @@ export default function OfferPage() {
             onChange={(e) => setDays(Math.max(1, Number(e.target.value) || 1))}
           />
           <span className="text-gray-700">
-            {lang === "en"
+            {L === "en"
               ? `Rate: ${DAY_RATE.toLocaleString("en-US")} € / day`
               : `Satz: ${DAY_RATE.toLocaleString("de-DE")} € / Tag`}
           </span>
@@ -341,7 +360,7 @@ export default function OfferPage() {
       {previewOpen && (
         <section className="rounded-xl border p-4 space-y-3">
           <h2 className="font-medium text-sm">
-            {lang === "en"
+            {L === "en"
               ? "Preview (draft, non-binding)"
               : "Vorschau (Entwurf, unverbindlich)"}
           </h2>
@@ -354,7 +373,9 @@ export default function OfferPage() {
                 dayRate={DAY_RATE}
                 total={total}
                 options={priceOptions}
-                lang={lang}
+                lang={L}
+                behavior={behaviorResolved}
+                skills={skillsResolved}
               />
             </PDFViewer>
           </div>
@@ -364,14 +385,14 @@ export default function OfferPage() {
       {/* Fortsetzen & speichern */}
       <section className="rounded-xl border p-4 space-y-3">
         <h2 className="font-medium">
-          {lang === "en" ? "Continue & save" : "Fortsetzen & speichern"}
+          {L === "en" ? "Continue & save" : "Fortsetzen & speichern"}
         </h2>
 
         {!sessionUser && (
           <>
             <input
               type="email"
-              placeholder={lang === "en" ? "Your email" : "Ihre E-Mail"}
+              placeholder={L === "en" ? "Your email" : "Ihre E-Mail"}
               className="w-full border rounded-lg p-2 mb-2"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -383,10 +404,10 @@ export default function OfferPage() {
               disabled={saving || !email}
             >
               {saving
-                ? lang === "en"
+                ? L === "en"
                   ? "Sending…"
                   : "Sende…"
-                : lang === "en"
+                : L === "en"
                 ? "Send login link"
                 : "Login-Link senden"}
             </button>
@@ -401,10 +422,10 @@ export default function OfferPage() {
             disabled={saving}
           >
             {saving
-              ? lang === "en"
+              ? L === "en"
                 ? "Saving…"
                 : "Speichere…"
-              : lang === "en"
+              : L === "en"
               ? "Save in my account"
               : "In meinem Konto speichern"}
           </button>
@@ -413,93 +434,10 @@ export default function OfferPage() {
         {msg && <p className="text-sm text-gray-700 mt-2">{msg}</p>}
 
         <p className="text-xs text-gray-500">
-          {lang === "en"
+          {L === "en"
             ? "By logging in you accept staged payments, a structured acceptance process (5 working days) and data protection notes."
             : "Mit Login akzeptieren Sie Abschlagszahlungen, Abnahmeprozess (5 WT) und DSGVO-Hinweise."}
         </p>
-      </section>
-
-      {/* Nächster Schritt: Freigabe / Hover-Erklärung */}
-      <section className="rounded-xl border p-4 space-y-3">
-        <h2 className="font-medium">
-          {lang === "en"
-            ? "Next step: Approve this offer"
-            : "Nächster Schritt: Angebot freigeben"}
-        </h2>
-
-        <p className="text-sm text-gray-700">
-          {lang === "en"
-            ? "If this draft reflects what you want, the next step will be a simple digital confirmation with a clear, documented offer summary."
-            : "Wenn dieser Entwurf zu Ihrem Vorhaben passt, erfolgt im nächsten Schritt eine einfache digitale Freigabe mit klar dokumentierter Angebotsbestätigung."}
-        </p>
-
-        <ul className="list-disc pl-5 text-xs text-gray-600 space-y-1">
-          <li>
-            {lang === "en"
-              ? "No surprises: scope, rate and days stay exactly as shown here."
-              : "Keine Überraschungen: Leistungsumfang, Tagessatz und Tage bleiben exakt wie hier dargestellt."}
-          </li>
-          <li>
-            {lang === "en"
-              ? "You see all conditions transparently before confirming."
-              : "Sie sehen alle Bedingungen transparent, bevor Sie bestätigen."}
-          </li>
-          <li>
-            {lang === "en"
-              ? "Your digital approval will trigger preparation and slot reservation."
-              : "Ihre digitale Freigabe startet Vorbereitung und Slot-Reservierung."}
-          </li>
-        </ul>
-
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2">
-          {/* Button mit freundlichem Tooltip */}
-          <div className="relative group inline-flex">
-            <button
-              type="button"
-              className="rounded-full bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 text-sm font-medium"
-              title={
-                lang === "en"
-                  ? "Soon: click here to digitally approve this offer and receive a documented confirmation."
-                  : "Bald: Hier klicken, um dieses Angebot digital freizugeben und eine dokumentierte Bestätigung zu erhalten."
-              }
-            >
-              {lang === "en"
-                ? "Continue: Approve this offer"
-                : "Weiter: Dieses Angebot freigeben"}
-            </button>
-
-            <div className="pointer-events-none absolute left-0 top-full mt-2 w-[260px] rounded-lg bg-amber-50 border border-amber-300 text-[10px] sm:text-xs text-amber-900 shadow-md px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              {lang === "en" ? (
-                <>
-                  This button will, in the next expansion stage, lead you to a
-                  simple digital approval.
-                  <br />
-                  You&apos;ll review once more and confirm with one click.
-                </>
-              ) : (
-                <>
-                  Dieser Button führt Sie im nächsten Ausbauschritt zu einer
-                  einfachen digitalen Freigabe.
-                  <br />
-                  Sie prüfen final und bestätigen mit einem Klick.
-                </>
-              )}
-            </div>
-          </div>
-
-          <a
-            href={
-              lang === "de"
-                ? "mailto:karsten.zenk@gmail.com?subject=Frage%20zum%20Angebotsentwurf"
-                : "mailto:karsten.zenk@gmail.com?subject=Question%20about%20offer%20draft"
-            }
-            className="text-xs text-gray-700 underline underline-offset-4"
-          >
-            {lang === "en"
-              ? "Questions before approval? Reach out."
-              : "Fragen vorab? Kurz melden."}
-          </a>
-        </div>
       </section>
     </main>
   );
