@@ -1,9 +1,10 @@
 // app/brief/page.tsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { BEHAVIORS, SKILLS, LOCAL_KEYS, Lang } from "../lib/catalog";
+import { useEffect, useState } from "react";
+import { BEHAVIORS, SKILLS, LOCAL_KEYS, type Lang } from "../lib/catalog";
 import { useLanguage } from "../lang/LanguageContext";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { ProcessBar } from "../components/ProcessBar";
 import Link from "next/link";
 
@@ -59,6 +60,7 @@ export default function BriefPage() {
         <h1 className="text-2xl font-semibold">
           {L === "en" ? "Project briefing" : "Projekt-Briefing"}
         </h1>
+        <LanguageSwitcher />
       </header>
 
       <ProcessBar current="brief" />
