@@ -1,444 +1,604 @@
 // app/offer/page.tsx
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { supabase } from "../lib/supabaseClient";
-import { persistOfferV1, type Change } from "../lib/db";
 
+import {
+  BEHAVIORS,
+  SKILLS,
+  PSYCH_LEVELS,
+  CARING_LEVELS,
+  LOCAL_KEYS,
+  type Lang,
+  type Behavior,
+  type Level,
+  type BehaviorId,
+  type PsychoId,
+  type CaringId,
+} from "../lib/catalog";
 import { useLanguage } from "../lang/LanguageContext";
-import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { ProcessBar } from "../components/ProcessBar";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
+import { validateSelection } from "../lib/mandateRules";
+import type { SkillNotes } from "../components/OfferPdf"; // nur Type, kein Runtime-Import
 
-import { PDFViewer, pdf } from "@react-pdf/renderer";
-import { OfferPdf } from "../components/OfferPdf";
-
-import { BEHAVIORS, SKILLS, LOCAL_KEYS, Lang } from "../lib/catalog";
-
-type Brief = Record<string, any>;
-const DAY_RATE = 2000;
+const BASE_DAY_RATE = 2000;
 
 export default function OfferPage() {
-  // Basisdaten
-  const [brief, setBrief] = useState<Brief>({});
-  const [roles, setRoles] = useState<string[]>([]);
-  const [days, setDays] = useState<number>(5);
-
-  // abgeleitete Inhalte aus Briefing (Behavior + Skills)
-  const [behaviorResolved, setBehaviorResolved] = useState<{
-    ctx: string;
-    pkg: string;
-    style: string;
-    outcome: string;
-  } | null>(null);
-
-  const [skillsResolved, setSkillsResolved] = useState<
-    {
-      id: string;
-      title: string;
-      offer: string;
-      need?: string;
-      outcome?: string;
-    }[]
-  >([]);
-
-  // Session / Aktionen
-  const [sessionUser, setSessionUser] = useState<any>(null);
-  const [email, setEmail] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState("");
-  const [previewOpen, setPreviewOpen] = useState(false);
-
   const { lang } = useLanguage();
   const L: Lang = (lang as Lang) || "de";
-  const total = useMemo(() => days * DAY_RATE, [days]);
 
-  // Supabase-Session beobachten
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSessionUser(data.session?.user ?? null);
-    });
-    const sub = supabase.auth.onAuthStateChange((_e, s) =>
-      setSessionUser(s?.user ?? null)
-    );
-    return () => sub.data?.subscription?.unsubscribe();
-  }, []);
+  const [brief, setBrief] = useState<Record<string, string>>({});
+  const [behaviorId, setBehaviorId] = useState<string>("");
+  const [skillIds, setSkillIds] = useState<string[]>([]);
+  const [psychoId, setPsychoId] = useState<string>("");
+  const [caringId, setCaringId] = useState<string>("");
+  const [notes, setNotes] = useState<SkillNotes>({});
+  const [days, setDays] = useState<number>(5);
 
-  // Lokale Daten (Brief & Rollen) laden + Behavior/Skills auflösen
+  // Mandatslogik-Validierung
+  const validation = validateSelection(
+    behaviorId as BehaviorId | "",
+    psychoId as PsychoId | "",
+    caringId as CaringId | ""
+  );
+  const isBlocked = validation.severity === "blocked";
+
+  // Laden aus localStorage
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const parseJson = <T,>(v: string | null, fallback: T): T => {
-      if (!v) return fallback;
-      try {
-        return JSON.parse(v) as T;
-      } catch {
-        return fallback;
-      }
-    };
-
     try {
-      const form = parseJson<Record<string, any>>(
-        localStorage.getItem("brief.form"),
-        {}
-      );
-      const selected = parseJson<string[]>(
-        localStorage.getItem("brief.selected"),
-        []
-      );
+      const formRaw = window.localStorage.getItem(LOCAL_KEYS.form);
+      const skillsRaw = window.localStorage.getItem(LOCAL_KEYS.skills);
+      const notesRaw = window.localStorage.getItem(LOCAL_KEYS.notes);
+      const daysRaw = window.localStorage.getItem("offer.days");
 
-      setBrief(form);
-      setRoles(Array.isArray(selected) ? selected : []);
-    } catch {
-      /* tolerant */
-    }
-
-    // **NEU – Verhalten + Skills**
-    try {
-      const behaviorId = localStorage.getItem(LOCAL_KEYS.behavior) || "";
-      if (behaviorId) {
-        const b = BEHAVIORS.find((x) => x.id === behaviorId);
-        if (b) {
-          setBehaviorResolved({
-            ctx: b.ctx[L],
-            pkg: b.pkg[L],
-            style: b.style[L],
-            outcome: b.outcome[L],
-          });
-        } else {
-          setBehaviorResolved(null);
+      setBrief(formRaw ? JSON.parse(formRaw) : {});
+      setBehaviorId(window.localStorage.getItem(LOCAL_KEYS.behavior) || "");
+      setSkillIds(skillsRaw ? (JSON.parse(skillsRaw) as string[]) : []);
+      setPsychoId(window.localStorage.getItem(LOCAL_KEYS.psycho) || "");
+      setCaringId(window.localStorage.getItem(LOCAL_KEYS.caring) || "");
+      setNotes(notesRaw ? (JSON.parse(notesRaw) as SkillNotes) : {});
+      if (daysRaw) {
+        const parsed = Number(daysRaw);
+        if (!Number.isNaN(parsed) && parsed > 0) {
+          setDays(parsed);
         }
-      } else {
-        setBehaviorResolved(null);
       }
-
-      const skillIds = parseJson<string[]>(
-        localStorage.getItem(LOCAL_KEYS.skills),
-        []
-      );
-      const notes = parseJson<
-        Record<string, { need?: string; outcome?: string }>
-      >(localStorage.getItem(LOCAL_KEYS.notes), {});
-
-      const resolved = (skillIds || [])
-        .map((id) => {
-          const s = SKILLS.find((x) => x.id === id);
-          if (!s) return null;
-          return {
-            id,
-            title: s.title[L],
-            offer: s.offerShort[L],
-            need: notes?.[id]?.need || "",
-            outcome: notes?.[id]?.outcome || "",
-          };
-        })
-        .filter(Boolean) as {
-        id: string;
-        title: string;
-        offer: string;
-        need?: string;
-        outcome?: string;
-      }[];
-
-      setSkillsResolved(resolved);
     } catch {
-      setBehaviorResolved(null);
-      setSkillsResolved([]);
+      setBrief({});
+      setBehaviorId("");
+      setSkillIds([]);
+      setPsychoId("");
+      setCaringId("");
+      setNotes({});
+      setDays(5);
     }
-  }, [L]);
+  }, []);
 
-  // Change-Log vorbereiten
-  function buildChanges(): Change[] {
-    const now = new Date().toISOString();
-    return [
-      { kind: "snapshot", path: "/brief", new: brief, at: now },
-      { kind: "set", path: "/selectedRoles", new: roles, at: now },
-      { kind: "set", path: "/days", new: days, at: now },
-      { kind: "set", path: "/dayRate", new: DAY_RATE, at: now },
-      { kind: "set", path: "/total", new: total, at: now },
-    ];
-  }
+  // Tage zurückschreiben
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("offer.days", String(days));
+  }, [days]);
 
-  // Magic-Link Login
-  async function saveWithEmail() {
-    try {
-      setSaving(true);
-      setMsg("");
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: `${window.location.origin}/portal` },
-      });
-      if (error) throw error;
-      setMsg(
-        L === "en"
-          ? "Login link sent. Please check your email."
-          : "Login-Link gesendet. Bitte E-Mail prüfen."
-      );
-    } catch (e: any) {
-      setMsg(e?.message || String(e));
-    } finally {
-      setSaving(false);
-    }
-  }
+  // Reset
+  const resetAll = () => {
+    if (typeof window === "undefined") return;
+    [
+      LOCAL_KEYS.form,
+      LOCAL_KEYS.behavior,
+      LOCAL_KEYS.skills,
+      LOCAL_KEYS.psycho,
+      LOCAL_KEYS.caring,
+      LOCAL_KEYS.notes,
+      "offer.days",
+    ].forEach((k) => window.localStorage.removeItem(k));
 
-  // Direkt ins Konto speichern (eingeloggt)
-  async function saveToAccount() {
-    try {
-      setSaving(true);
-      setMsg("");
-      const res = await persistOfferV1(supabase, {
-        brief,
-        selectedRoles: roles,
-        days,
-        dayRate: DAY_RATE,
-        changes: buildChanges(),
-      });
-      const briefId = (res as any).briefId ?? (res as any).brief_id ?? "—";
-      const offerId = (res as any).offerId ?? (res as any).offer_id ?? "—";
-      setMsg(
-        (L === "en" ? "Saved: Brief " : "Gespeichert: Brief ") +
-          briefId +
-          ", Offer " +
-          offerId
-      );
-    } catch (e: any) {
-      setMsg(e?.message || String(e));
-    } finally {
-      setSaving(false);
-    }
-  }
+    setBrief({});
+    setBehaviorId("");
+    setSkillIds([]);
+    setPsychoId("");
+    setCaringId("");
+    setNotes({});
+    setDays(5);
+  };
 
-  // PDF herunterladen
-  async function downloadPdf() {
-    try {
-      setSaving(true);
-      setMsg("");
-      const blob = await pdf(
-        <OfferPdf
-          brief={brief}
-          roles={roles}
-          days={days}
-          dayRate={DAY_RATE}
-          total={total}
-          lang={L}
-          behavior={behaviorResolved}
-          skills={skillsResolved}
-        />
-      ).toBlob();
+  // Lookups
+  const { behavior, selectedSkills, psych, caring } = useMemo(() => {
+    const b: Behavior | null =
+      BEHAVIORS.find((x) => x.id === behaviorId) ?? null;
+    const s = SKILLS.filter((s) => skillIds.includes(s.id));
+    const p: Level | null = PSYCH_LEVELS.find((x) => x.id === psychoId) ?? null;
+    const c: Level | null =
+      CARING_LEVELS.find((x) => x.id === caringId) ?? null;
+    return { behavior: b, selectedSkills: s, psych: p, caring: c };
+  }, [behaviorId, skillIds, psychoId, caringId]);
 
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      const file = `Angebotsentwurf_${(brief?.kunde || "Unbenannt")
-        .toString()
-        .replace(/\s+/g, "_")}.pdf`;
-      a.href = url;
-      a.download = file;
-      a.click();
-      URL.revokeObjectURL(url);
+  // Preis-Logik an *einer* Stelle
+  const priceFactor =
+    (psych?.priceFactor ?? 1) * (caring?.priceFactor ?? 1) || 1;
+  const dayRate = Math.round(BASE_DAY_RATE * priceFactor);
+  const net = dayRate * days;
+  const tax = Math.round(net * 0.19 * 100) / 100;
+  const gross = Math.round((net + tax) * 100) / 100;
 
-      setMsg(
-        L === "en"
-          ? "PDF downloaded (non-binding draft)."
-          : "PDF heruntergeladen (unverbindlicher Entwurf)."
-      );
-    } catch (e: any) {
-      setMsg(e?.message || String(e));
-    } finally {
-      setSaving(false);
-    }
-  }
+  // Strings für Summary / Vorschau
+  const behaviorSummary = behavior
+    ? `${behavior.ctx[L]} – ${behavior.pkg[L]}`
+    : "–";
+  const psychSummary = psych ? psych.name[L] : "–";
+  const caringSummary = caring ? caring.name[L] : "–";
+  const skillsSummary =
+    selectedSkills.length > 0
+      ? selectedSkills.map((s) => s.title[L]).join(", ")
+      : L === "en"
+      ? "No skills selected."
+      : "Keine Skills ausgewählt.";
 
-  // Preisoptionen (gehen ins PDF – optional)
-  const priceOptions = [
-    {
-      label: L === "en" ? "Starter (3 days)" : "Starter (3 WT)",
-      days: 3,
-      total: 3 * DAY_RATE,
-    },
-    {
-      label: L === "en" ? "Core (5 days)" : "Kern (5 WT)",
-      days: 5,
-      total: 5 * DAY_RATE,
-    },
-    {
-      label: L === "en" ? "Plus (8 days)" : "Plus (8 WT)",
-      days: 8,
-      total: 8 * DAY_RATE,
-    },
-  ];
+  const currency = L === "en" ? "EUR" : "€";
+  const locale = L === "en" ? "en-US" : "de-DE";
+
+  const label = (de: string, en: string) => (L === "en" ? en : de);
+
+  const inputBase =
+    "border border-slate-300 rounded px-2 py-1 text-sm text-slate-900 bg-white " +
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-800 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-50";
+
+  // „Empty state“: kein Briefing / nach Neu-Start
+  const isEmpty =
+    (!brief || Object.keys(brief).length === 0) &&
+    !behaviorId &&
+    skillIds.length === 0 &&
+    !psychoId &&
+    !caringId;
 
   return (
-    <main className="max-w-5xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">
+    <main className="max-w-5xl mx-auto p-6 space-y-6 bg-slate-50 text-slate-900 min-h-screen">
+      <header className="flex items-center justify-between gap-4 mb-2">
+        <h1 className="text-2xl font-semibold text-slate-900">
           {L === "en" ? "Offer draft" : "Angebots-Entwurf"}
         </h1>
-        <div className="flex items-center gap-4">
-          <div className="hidden sm:flex gap-2">
-            <Link
-              href={`/explore?lang=${L}`}
-              className="rounded-full border px-3 py-1.5 text-xs sm:text-sm hover:bg-gray-50"
-            >
-              {L === "en" ? "Choose roles" : "Rollen wählen"}
-            </Link>
-            <Link
-              href={`/brief?lang=${L}`}
-              className="rounded-full border px-3 py-1.5 text-xs sm:text-sm hover:bg-gray-50"
-            >
-              {L === "en" ? "Edit briefing" : "Brief bearbeiten"}
-            </Link>
-            <button
-              type="button"
-              onClick={() => setPreviewOpen((v) => !v)}
-              className="rounded-full border px-3 py-1.5 text-xs sm:text-sm hover:bg-gray-50"
-            >
-              {previewOpen
-                ? L === "en"
-                  ? "Close preview"
-                  : "Vorschau schließen"
-                : L === "en"
-                ? "Open preview"
-                : "Vorschau öffnen"}
-            </button>
-            <button
-              type="button"
-              onClick={downloadPdf}
-              className="rounded-full border px-3 py-1.5 text-xs sm:text-sm hover:bg-gray-900 hover:text-white disabled:opacity-50"
-              disabled={saving}
-            >
-              {L === "en" ? "Download PDF" : "PDF herunterladen"}
-            </button>
-          </div>
+        <div className="flex items-center gap-3">
           <LanguageSwitcher />
+          <button
+            type="button"
+            onClick={resetAll}
+            className="rounded-full border border-slate-400 px-3 py-1 text-xs bg-white text-slate-900 hover:bg-slate-100 transition"
+          >
+            {L === "en"
+              ? "Start new (clear data)"
+              : "Neu starten (Daten löschen)"}
+          </button>
         </div>
       </header>
 
-      {/* Prozess */}
       <ProcessBar current="offer" />
 
-      {/* Zusammenfassung */}
-      <section className="rounded-xl border p-4 space-y-3">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-          <div>
-            <b>{L === "en" ? "Roles:" : "Rollen:"}</b>{" "}
-            {roles.length ? roles.join(", ") : "—"}
-          </div>
-          <div>
-            <b>{L === "en" ? "Days:" : "Tage:"}</b> {days}
-          </div>
-          <div>
-            <b>{L === "en" ? "Rate/day:" : "Satz/Tag:"}</b>{" "}
-            {DAY_RATE.toLocaleString(L === "en" ? "en-US" : "de-DE")} €
-          </div>
-          <div>
-            <b>{L === "en" ? "Total:" : "Summe:"}</b>{" "}
-            {total.toLocaleString(L === "en" ? "en-US" : "de-DE")} €
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 pt-2 text-sm">
-          <span>{L === "en" ? "Days:" : "Tage:"}</span>
-          <input
-            type="number"
-            min={1}
-            className="w-24 border rounded-lg p-2"
-            value={days}
-            onChange={(e) => setDays(Math.max(1, Number(e.target.value) || 1))}
-          />
-          <span className="text-gray-700">
-            {L === "en"
-              ? `Rate: ${DAY_RATE.toLocaleString("en-US")} € / day`
-              : `Satz: ${DAY_RATE.toLocaleString("de-DE")} € / Tag`}
-          </span>
-        </div>
-      </section>
-
-      {/* Inline-PDF-Vorschau */}
-      {previewOpen && (
-        <section className="rounded-xl border p-4 space-y-3">
-          <h2 className="font-medium text-sm">
-            {L === "en"
-              ? "Preview (draft, non-binding)"
-              : "Vorschau (Entwurf, unverbindlich)"}
-          </h2>
-          <div className="h-[600px] border rounded-lg overflow-hidden">
-            <PDFViewer width="100%" height="100%">
-              <OfferPdf
-                brief={brief}
-                roles={roles}
-                days={days}
-                dayRate={DAY_RATE}
-                total={total}
-                options={priceOptions}
-                lang={L}
-                behavior={behaviorResolved}
-                skills={skillsResolved}
-              />
-            </PDFViewer>
-          </div>
+      {/* Mandats-Warnungen */}
+      {validation.messages.length > 0 && !isEmpty && (
+        <section
+          className={
+            validation.severity === "blocked"
+              ? "mt-4 rounded-md border border-red-500 bg-red-50 p-3 text-xs text-red-800"
+              : "mt-4 rounded-md border border-amber-500 bg-amber-50 p-3 text-xs text-amber-800"
+          }
+        >
+          {validation.messages.map((m, idx) => (
+            <p key={idx}>{L === "en" ? m.en : m.de}</p>
+          ))}
+          {isBlocked && (
+            <p className="mt-2 font-semibold">
+              {L === "en"
+                ? "The current combination is not valid according to the mandate logic. Please adjust the selection in the briefing step."
+                : "Die aktuelle Kombination ist laut Mandatslogik nicht zulässig. Bitte passen Sie die Auswahl im Projekt-Briefing an."}
+            </p>
+          )}
         </section>
       )}
 
-      {/* Fortsetzen & speichern */}
-      <section className="rounded-xl border p-4 space-y-3">
-        <h2 className="font-medium">
-          {L === "en" ? "Continue & save" : "Fortsetzen & speichern"}
-        </h2>
-
-        {!sessionUser && (
-          <>
-            <input
-              type="email"
-              placeholder={L === "en" ? "Your email" : "Ihre E-Mail"}
-              className="w-full border rounded-lg p-2 mb-2"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <button
-              type="button"
-              className="w-full rounded-lg bg-black text-white py-2 disabled:opacity-50"
-              onClick={saveWithEmail}
-              disabled={saving || !email}
+      {/* EMPTY STATE – nach Neu-Start oder ohne Briefing */}
+      {isEmpty ? (
+        <section className="rounded-xl border border-slate-300 bg-white p-8 text-sm flex flex-col items-start gap-4 shadow-sm">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            {L === "en" ? "No data yet" : "Noch kein Briefing geladen"}
+          </div>
+          <h2 className="text-lg font-semibold text-slate-900">
+            {L === "en"
+              ? "Start with the project briefing"
+              : "Starten Sie mit dem Projekt-Briefing"}
+          </h2>
+          <p className="text-slate-700 max-w-xl">
+            {L === "en"
+              ? "There is currently no briefing data for an offer draft. Please complete the project briefing first and then return to this page for a commercial preview."
+              : "Aktuell liegen keine Briefing-Daten für einen Angebotsentwurf vor. Bitte füllen Sie zunächst das Projekt-Briefing aus und kehren Sie anschließend für eine kaufmännische Vorschau auf diese Seite zurück."}
+          </p>
+          <div className="flex flex-wrap gap-3 mt-2">
+            <Link
+              href="/brief"
+              className="rounded-full bg-slate-900 text-white px-4 py-2 text-xs hover:bg-slate-800 transition"
             >
-              {saving
-                ? L === "en"
-                  ? "Sending…"
-                  : "Sende…"
-                : L === "en"
-                ? "Send login link"
-                : "Login-Link senden"}
-            </button>
-          </>
-        )}
+              {L === "en" ? "Back to briefing" : "Zurück zum Briefing"}
+            </Link>
+          </div>
+        </section>
+      ) : (
+        <>
+          {/* Zusammenfassung */}
+          <section className="rounded-xl border border-slate-300 bg-white p-5 text-sm space-y-4 shadow-sm">
+            <h2 className="font-semibold text-slate-900">
+              {L === "en"
+                ? "Summary of your selection"
+                : "Zusammenfassung Ihrer Auswahl"}
+            </h2>
 
-        {sessionUser && (
-          <button
-            type="button"
-            className="w-full rounded-lg border py-2 disabled:opacity-50"
-            onClick={saveToAccount}
-            disabled={saving}
-          >
-            {saving
-              ? L === "en"
-                ? "Saving…"
-                : "Speichere…"
-              : L === "en"
-              ? "Save in my account"
-              : "In meinem Konto speichern"}
-          </button>
-        )}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Mandats-Kontext */}
+              <div className="space-y-4">
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    {L === "en" ? "🧭 Mandate context" : "🧭 Mandats-Kontext"}
+                  </div>
 
-        {msg && <p className="text-sm text-gray-700 mt-2">{msg}</p>}
+                  <div className="mt-2">
+                    <div className="text-[13px] font-semibold text-slate-900">
+                      {L === "en"
+                        ? "Context & behaviour"
+                        : "Kontext & Verhalten"}
+                    </div>
+                    <div className="text-slate-800">{behaviorSummary}</div>
+                  </div>
 
-        <p className="text-xs text-gray-500">
-          {L === "en"
-            ? "By logging in you accept staged payments, a structured acceptance process (5 working days) and data protection notes."
-            : "Mit Login akzeptieren Sie Abschlagszahlungen, Abnahmeprozess (5 WT) und DSGVO-Hinweise."}
-        </p>
-      </section>
+                  <div className="mt-3 pt-3 border-t border-slate-200">
+                    <div className="text-[13px] font-semibold text-slate-900">
+                      {L === "en"
+                        ? "Psychosocial depth"
+                        : "Psychosoziale Tiefe"}
+                    </div>
+                    <div className="text-slate-800">{psychSummary}</div>
+                  </div>
+
+                  <div className="mt-3 pt-3 border-t border-slate-200">
+                    <div className="text-[13px] font-semibold text-slate-900">
+                      {L === "en"
+                        ? "Emotional investment (caring)"
+                        : "Emotionale Investition (Caring)"}
+                    </div>
+                    <div className="text-slate-800">{caringSummary}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Umfang + kaufmännische Parameter */}
+              <div className="space-y-5">
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    {L === "en"
+                      ? "🧩 Professional scope"
+                      : "🧩 Fachlicher Umfang"}
+                  </div>
+                  <div className="mt-2">
+                    <div className="text-[13px] font-semibold text-slate-900">
+                      {L === "en" ? "Professional skills" : "Fachliche Skills"}
+                    </div>
+                    <div className="text-slate-800">{skillsSummary}</div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-slate-200 space-y-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    {L === "en"
+                      ? "💶 Commercial parameters"
+                      : "💶 Kaufmännische Parameter"}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <label
+                      className="font-semibold text-slate-900"
+                      htmlFor="days"
+                    >
+                      {L === "en" ? "Days" : "Tage"}
+                    </label>
+                    <input
+                      id="days"
+                      type="number"
+                      min={1}
+                      max={60}
+                      step={1}
+                      className={inputBase + " w-20 text-right"}
+                      value={days}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === "") return;
+                        const parsed = Number(raw);
+                        if (Number.isNaN(parsed) || parsed <= 0) {
+                          setDays(1);
+                        } else if (parsed > 60) {
+                          setDays(60);
+                        } else {
+                          setDays(parsed);
+                        }
+                      }}
+                    />
+                    <span className="text-xs text-slate-700">
+                      {L === "en" ? "Rate/day:" : "Satz/Tag:"}{" "}
+                      {dayRate.toLocaleString(locale, {
+                        minimumFractionDigits: 0,
+                      })}{" "}
+                      {currency}
+                    </span>
+                  </div>
+
+                  <div className="text-xs text-slate-700">
+                    {L === "en" ? "Base rate" : "Basis-Tagessatz"}:{" "}
+                    {BASE_DAY_RATE.toLocaleString(locale, {
+                      minimumFractionDigits: 0,
+                    })}{" "}
+                    {currency} · {L === "en" ? "factor" : "Faktor"}{" "}
+                    {priceFactor.toFixed(2)}
+                  </div>
+
+                  <div className="pt-1 text-sm font-semibold text-slate-900">
+                    {L === "en" ? "Total (net)" : "Summe (netto)"}:{" "}
+                    {net.toLocaleString(locale, {
+                      minimumFractionDigits: 0,
+                    })}{" "}
+                    {currency}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Kaufmännische Vorschau („Pseudo-PDF“ im Browser) */}
+          <section className="rounded-xl border border-slate-300 bg-white p-3 shadow-sm">
+            <h2 className="font-medium text-sm mb-2 text-slate-900">
+              {L === "en"
+                ? "Preview (draft, non-binding)"
+                : "Vorschau (Entwurf, unverbindlich)"}
+            </h2>
+
+            <div
+              className={
+                "h-[640px] border border-slate-300 rounded bg-slate-50 p-4 overflow-y-auto text-xs text-slate-900 " +
+                (isBlocked ? "opacity-60 pointer-events-none" : "")
+              }
+            >
+              {/* Sender & Empfänger */}
+              <div className="flex justify-between mb-4 gap-6">
+                <div>
+                  <div className="font-semibold">
+                    {brief.anbieterName || "Muster Consulting GmbH"}
+                  </div>
+                  <div>
+                    {brief.anbieterAdresse ||
+                      "Musterstraße 1 · 12345 Musterstadt"}
+                  </div>
+                  <div>
+                    {brief.anbieterKontakt ||
+                      "T +49 000 000000 · info@muster-consulting.de"}
+                  </div>
+                  <div>
+                    {label("USt-IdNr.:", "VAT ID:")}{" "}
+                    {brief.anbieterUstId || "DEXXXXXXXXX"}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="font-semibold">
+                    {brief.kunde ||
+                      (L === "en"
+                        ? "Client company"
+                        : "Unternehmen des Auftraggebers")}
+                  </div>
+                  <div className="text-slate-700">
+                    {brief.kontakt ||
+                      (L === "en"
+                        ? "Contact person"
+                        : "Ansprechpartner:in (noch offen)")}
+                  </div>
+                  <div className="mt-1 text-slate-700">
+                    {label("Projekt:", "Project:")}{" "}
+                    {brief.projekt ||
+                      (L === "en" ? "Project / subject" : "Projekt / Thema")}
+                  </div>
+                </div>
+              </div>
+
+              <h3 className="text-sm font-semibold mb-2">
+                {label(
+                  "Unverbindliches Angebot – Projekt / Thema",
+                  "Non-binding offer – project / subject"
+                )}
+              </h3>
+
+              <p className="mb-3">
+                {label(
+                  "Vielen Dank für Ihre Anfrage und das entgegengebrachte Vertrauen. Auf Grundlage der vorliegenden Informationen biete ich Ihnen für das oben genannte Vorhaben folgende Unterstützungsleistung an:",
+                  "Thank you for your request and the trust placed in this collaboration. Based on the information currently available, I propose the following support for the above project:"
+                )}
+              </p>
+
+              {/* Verhaltenpaket */}
+              <h4 className="font-semibold mt-3 mb-1">
+                {label(
+                  "2. Verhaltenpaket (Kontext & Stil)",
+                  "2. Behaviour package (context & style)"
+                )}
+              </h4>
+              <div className="border border-slate-300 rounded p-2 bg-white mb-2">
+                {behavior ? (
+                  <div>• {behaviorSummary}</div>
+                ) : (
+                  <div className="text-slate-600">
+                    {label(
+                      "Hinweis: (Kein Paket gewählt.)",
+                      "Note: (No package selected.)"
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Fachliche Rollen & Qualifikationen */}
+              <h4 className="font-semibold mt-3 mb-1">
+                {label(
+                  "3. Fachliche Rollen & Qualifikationen",
+                  "3. Professional roles & skills"
+                )}
+              </h4>
+              <div className="border border-slate-300 rounded p-2 bg-white mb-2 space-y-2">
+                {selectedSkills.length === 0 ? (
+                  <div className="text-slate-600">
+                    {label(
+                      "Hinweis: (Keine Auswahl getroffen.)",
+                      "Note: (No skills selected.)"
+                    )}
+                  </div>
+                ) : (
+                  selectedSkills.map((s) => {
+                    const note = notes[s.id] || {};
+                    return (
+                      <div key={s.id} className="mb-1">
+                        <div>• {s.title[L]}</div>
+                        {note.need && (
+                          <div className="text-slate-700">
+                            <span className="font-semibold">
+                              {label("Ihr Anliegen:", "Your need:")}{" "}
+                            </span>
+                            {note.need}
+                          </div>
+                        )}
+                        {note.outcome && (
+                          <div className="text-slate-700">
+                            <span className="font-semibold">
+                              {label(
+                                "Ihr Nutzen / DoD:",
+                                "Your benefit / DoD:"
+                              )}{" "}
+                            </span>
+                            {note.outcome}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Psychosoziale Tiefe */}
+              <h4 className="font-semibold mt-3 mb-1">
+                {label(
+                  "4. Psychosoziale Interaktions-Tiefe",
+                  "4. Psychosocial intervention depth"
+                )}
+              </h4>
+              <div className="border border-slate-300 rounded p-2 bg-white mb-2">
+                {psych ? (
+                  <div>• {psychSummary}</div>
+                ) : (
+                  <div className="text-slate-600">
+                    {label(
+                      "Hinweis: (Kein psychosoziales Paket gewählt.)",
+                      "Note: (No psychosocial package selected.)"
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Caring-Level */}
+              <h4 className="font-semibold mt-3 mb-1">
+                {label(
+                  "5. Grad der emotionalen Investition (Caring-Level)",
+                  "5. Degree of emotional investment (caring level)"
+                )}
+              </h4>
+              <div className="border border-slate-300 rounded p-2 bg-white mb-2">
+                {caring ? (
+                  <div>• {caringSummary}</div>
+                ) : (
+                  <div className="text-slate-600">
+                    {label(
+                      "Hinweis: (Kein Caring-Level gewählt.)",
+                      "Note: (No caring level selected.)"
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Preisübersicht */}
+              <h4 className="font-semibold mt-3 mb-1">
+                {label("6. Preisübersicht", "6. Price overview")}
+              </h4>
+              <div className="border border-slate-300 rounded p-2 bg-white mb-2 space-y-1">
+                <div>
+                  {label("Tage:", "Days:")}{" "}
+                  {days.toLocaleString(locale, {
+                    minimumFractionDigits: 0,
+                  })}{" "}
+                  · {label("Satz/Tag:", "Rate/day:")}{" "}
+                  {dayRate.toLocaleString(locale, {
+                    minimumFractionDigits: 0,
+                  })}{" "}
+                  {currency}
+                </div>
+                <div>
+                  {label("Netto:", "Net total:")}{" "}
+                  {net.toLocaleString(locale, {
+                    minimumFractionDigits: 2,
+                  })}{" "}
+                  {currency}
+                </div>
+                <div>
+                  {label("Umsatzsteuer 19%:", "VAT 19%:")}{" "}
+                  {tax.toLocaleString(locale, {
+                    minimumFractionDigits: 2,
+                  })}{" "}
+                  {currency}
+                </div>
+                <div className="font-semibold">
+                  {label("Endbetrag:", "Total amount:")}{" "}
+                  {gross.toLocaleString(locale, {
+                    minimumFractionDigits: 2,
+                  })}{" "}
+                  {currency}
+                </div>
+              </div>
+
+              {/* Zahlungsbedingungen */}
+              <h4 className="font-semibold mt-3 mb-1">
+                {label(
+                  "7. Zahlungsbedingungen & nächster Schritt",
+                  "7. Payment terms & next step"
+                )}
+              </h4>
+              <div className="border border-slate-300 rounded p-2 bg-white space-y-1">
+                <div>
+                  •{" "}
+                  {label(
+                    "Rechnungsstellung leistungnah nach Projektfortschritt oder Meilensteinen.",
+                    "Invoicing close to performance, based on project progress or milestones."
+                  )}
+                </div>
+                <div>
+                  •{" "}
+                  {label(
+                    "Zahlungsziel: 14 Tage netto ohne Abzug.",
+                    "Payment term: 14 days net without deduction."
+                  )}
+                </div>
+                <div>
+                  •{" "}
+                  {label(
+                    "Bitte prüfen Sie den Angebotsentwurf und geben Sie mir bei Interesse ein kurzes Go für die Finalisierung.",
+                    "Please review this offer draft and let me know if you would like me to finalise it."
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+        </>
+      )}
     </main>
   );
 }
