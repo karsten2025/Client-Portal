@@ -413,7 +413,7 @@ export const PSYCH_LEVELS: Level[] = [
       de: "Stabile, hochperformante Teams und reduzierte Fluktuation in Stressphasen.",
       en: "Stable, high-performing teams and reduced turnover in stressful phases.",
     },
-    priceFactor: 1.2,
+    priceFactor: 1.5,
     level: {
       de: "Advanced-Level",
       en: "Advanced level",
@@ -445,7 +445,7 @@ export const PSYCH_LEVELS: Level[] = [
       de: "Handlungsfähigkeit in politisch komplexen Umfeldern, Sicherung des Projektwerts.",
       en: "Ability to act in politically complex environments, safeguarding project value.",
     },
-    priceFactor: 1.4,
+    priceFactor: 2.0,
     level: {
       de: "Expert-Level",
       en: "Expert level",
@@ -520,7 +520,7 @@ export const CARING_LEVELS: Level[] = [
       de: "Performance-orientierte Fürsorge ohne emotionale Verstrickung.",
       en: "Performance-oriented care without emotional entanglement.",
     },
-    priceFactor: 1.2,
+    priceFactor: 1.5,
     tagline: {
       de: "Empathisch, aber klar abgegrenzt.",
       en: "Empathetic, but clearly bounded.",
@@ -542,8 +542,8 @@ export const CARING_LEVELS: Level[] = [
       en: "No 24/7 ownership of the project, no personnel responsibility beyond the mandate.",
     },
     priceLabel: {
-      de: "Faktor 1,2 (erhöhtes Caring)",
-      en: "Factor 1.2 (increased caring)",
+      de: "Faktor 1,5 (erhöhtes Caring)",
+      en: "Factor 1.5 (increased caring)",
     },
   },
   {
@@ -560,7 +560,7 @@ export const CARING_LEVELS: Level[] = [
       de: "Höchster Einsatz – der Projektleiter verkauft seine Nerven und Sorge.",
       en: "Highest commitment – the project lead literally sells their nerves and concern.",
     },
-    priceFactor: 1.4,
+    priceFactor: 2.0,
     tagline: {
       de: "Als wäre es das eigene Unternehmen.",
       en: "As if it were their own company.",
@@ -582,8 +582,8 @@ export const CARING_LEVELS: Level[] = [
       en: "No assumption of legal employer function or formal director liability.",
     },
     priceLabel: {
-      de: "Faktor 1,4 (maximales Caring)",
-      en: "Factor 1.4 (maximum caring)",
+      de: "Faktor 2,0 (maximales Caring)",
+      en: "Factor 2.0 (maximum caring)",
     },
   },
 ];

@@ -14,6 +14,7 @@ import {
   CaringId,
 } from "../lib/catalog";
 import { useLanguage } from "../lang/LanguageContext";
+import { tPair } from "../lib/i18n";
 import { ProcessBar } from "../components/ProcessBar";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import Link from "next/link";
@@ -145,7 +146,7 @@ export default function BriefPage() {
     }
   }, [recommendedPsychoId, psychoId]);
 
-  const label = (de: string, en: string) => (L === "en" ? en : de);
+  const label = (de: string, en: string) => tPair(L, de, en);
 
   const inputBase =
     "w-full border border-slate-300 rounded-lg p-2 text-sm text-slate-900 bg-white " +

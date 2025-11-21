@@ -22,6 +22,7 @@ import { ProcessBar } from "../components/ProcessBar";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { validateSelection } from "../lib/mandateRules";
 import type { SkillNotes } from "../components/OfferPdf"; // nur Type, kein Runtime-Import
+import { formatCurrency } from "../lib/format";
 
 const BASE_DAY_RATE = 2000;
 
@@ -324,10 +325,7 @@ export default function OfferPage() {
                     />
                     <span className="text-xs text-slate-700">
                       {L === "en" ? "Rate/day:" : "Satz/Tag:"}{" "}
-                      {dayRate.toLocaleString(locale, {
-                        minimumFractionDigits: 0,
-                      })}{" "}
-                      {currency}
+                      {formatCurrency(dayRate, L, 0)} {currency}
                     </span>
                   </div>
 

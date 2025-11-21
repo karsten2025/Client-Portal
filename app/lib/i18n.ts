@@ -47,3 +47,8 @@ export function normalizeLang(input?: string | null): Lang {
 export function t(lang: Lang, key: string): string {
   return messages[lang][key] ?? messages[fallbackLang][key] ?? key;
 }
+export function tPair(lang: Lang, de: string, en: string): string {
+  // Einfacher Helfer für direkte Texte:
+  // tPair(lang, "Deutsch", "English")
+  return lang === "en" ? en : de;
+}
