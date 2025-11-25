@@ -26,6 +26,58 @@ import { formatCurrency } from "../lib/format";
 
 const BASE_DAY_RATE = 2000;
 
+// IDs wie in /explore
+type RoleId = "sys" | "ops" | "res" | "coach";
+
+const CONTRACT_ROLES: Record<
+  RoleId,
+  {
+    heading: Record<Lang, string>;
+    body: Record<Lang, string>;
+  }
+> = {
+  sys: {
+    heading: {
+      de: "Interim Management & Portfolio-Steuerung",
+      en: "Interim management & portfolio steering",
+    },
+    body: {
+      de: "Übernahme der operativen Steuerung von Projekten, Programmen oder Portfolios (Interim). Der AN schließt temporäre Vakanzen, steuert die Umsetzung auf Basis vereinbarter Meilensteine, sorgt für Transparenz im Reporting und koordiniert die fachliche Zulieferung der Teams ohne Reibungsverluste.",
+      en: "Assumption of operational steering of projects, programmes or portfolios on an interim basis. The Contractor bridges temporary vacancies, steers implementation based on agreed milestones, ensures transparent reporting and coordinates the professional contributions of the teams without friction.",
+    },
+  },
+  ops: {
+    heading: {
+      de: "Betriebssystem-Performance & Skalierung",
+      en: "Operating system performance & scaling",
+    },
+    body: {
+      de: "Analyse und Optimierung der Prozess- und Systemlandschaft. Der AN transformiert bestehende Abläufe in skalierbare Strukturen („Betriebssystem“), identifiziert Engpässe in der Wertschöpfungskette und etabliert effiziente Governance-Mechanismen zur Entlastung der Teams.",
+      en: "Analysis and optimisation of the process and system landscape. The Contractor transforms existing workflows into scalable structures (“operating system”), identifies bottlenecks along the value chain and establishes efficient governance mechanisms to relieve the teams.",
+    },
+  },
+  res: {
+    heading: {
+      de: "Strategische Resonanz & Stakeholder-Management",
+      en: "Strategic resonance & stakeholder management",
+    },
+    body: {
+      de: "Steuerung komplexer Stakeholder-Umfelder und politischer Kommunikation. Der AN fungiert als Übersetzer zwischen Fachebene und Management, löst kommunikative Blockaden auf und richtet unterschiedliche Interessenlagen strategisch auf das Projektziel aus.",
+      en: "Steering of complex stakeholder landscapes and political communication. The Contractor acts as a translator between specialist teams and management, resolves communication blockages and strategically aligns diverse interests with the project objectives.",
+    },
+  },
+  coach: {
+    heading: {
+      de: "Sparring, Coaching & Enablement",
+      en: "Sparring, coaching & enablement",
+    },
+    body: {
+      de: "Methodisches Coaching und Sparring für Führungskräfte und Teams. Der AN agiert als „Thinking Partner“ zur Entscheidungsfindung, befähigt Schlüsselpersonen in der Anwendung von Methoden und fördert die eigenständige Lösungsfindung in komplexen Lagen.",
+      en: "Methodical coaching and sparring for leaders and teams. The Contractor acts as a thinking partner in decision making, enables key players in the use of methods and supports independent solution finding in complex situations.",
+    },
+  },
+};
+
 export default function OfferPage() {
   const { lang } = useLanguage();
   const L: Lang = (lang as Lang) || "de";
@@ -37,6 +89,7 @@ export default function OfferPage() {
   const [caringId, setCaringId] = useState<string>("");
   const [notes, setNotes] = useState<SkillNotes>({});
   const [days, setDays] = useState<number>(5);
+  const [roleIds, setRoleIds] = useState<RoleId[]>([]);
 
   // Mandatslogik-Validierung
   const validation = validateSelection(
@@ -55,6 +108,7 @@ export default function OfferPage() {
       const skillsRaw = window.localStorage.getItem(LOCAL_KEYS.skills);
       const notesRaw = window.localStorage.getItem(LOCAL_KEYS.notes);
       const daysRaw = window.localStorage.getItem("offer.days");
+      const rolesRaw = window.localStorage.getItem("brief.selected");
 
       setBrief(formRaw ? JSON.parse(formRaw) : {});
       setBehaviorId(window.localStorage.getItem(LOCAL_KEYS.behavior) || "");
@@ -62,6 +116,8 @@ export default function OfferPage() {
       setPsychoId(window.localStorage.getItem(LOCAL_KEYS.psycho) || "");
       setCaringId(window.localStorage.getItem(LOCAL_KEYS.caring) || "");
       setNotes(notesRaw ? (JSON.parse(notesRaw) as SkillNotes) : {});
+      setRoleIds(rolesRaw ? (JSON.parse(rolesRaw) as RoleId[]) : []);
+
       if (daysRaw) {
         const parsed = Number(daysRaw);
         if (!Number.isNaN(parsed) && parsed > 0) {
@@ -75,6 +131,7 @@ export default function OfferPage() {
       setPsychoId("");
       setCaringId("");
       setNotes({});
+      setRoleIds([]);
       setDays(5);
     }
   }, []);
@@ -96,6 +153,7 @@ export default function OfferPage() {
       LOCAL_KEYS.caring,
       LOCAL_KEYS.notes,
       "offer.days",
+      "brief.selected",
     ].forEach((k) => window.localStorage.removeItem(k));
 
     setBrief({});
@@ -104,6 +162,7 @@ export default function OfferPage() {
     setPsychoId("");
     setCaringId("");
     setNotes({});
+    setRoleIds([]);
     setDays(5);
   };
 
@@ -155,6 +214,10 @@ export default function OfferPage() {
     skillIds.length === 0 &&
     !psychoId &&
     !caringId;
+
+  // Hauptrolle für Vertragsvorschau
+  const mainRoleId: RoleId | null = (roleIds[0] as RoleId | undefined) ?? null;
+  const mainRole = mainRoleId ? CONTRACT_ROLES[mainRoleId] : null;
 
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-6 bg-slate-50 text-slate-900 min-h-screen">
@@ -595,8 +658,142 @@ export default function OfferPage() {
               </div>
             </div>
           </section>
+
+          {/* NEU: Vertragsvorschau § 3 */}
+          <section className="rounded-xl border border-slate-300 bg-white p-5 text-sm space-y-3 shadow-sm">
+            <h2 className="font-semibold text-slate-900">
+              {L === "en"
+                ? "Contract preview – § 3 Scope & approach"
+                : "Vertragsvorschau – § 3 Leistungsumfang & Vorgehensweise"}
+            </h2>
+
+            {!mainRole && selectedSkills.length === 0 && !psych && !caring ? (
+              <p className="text-slate-700 text-xs">
+                {L === "en"
+                  ? "Once you have selected at least one role, skills and interaction levels in the briefing, a draft wording for § 3 will appear here."
+                  : "Sobald Sie im Briefing mindestens eine Rolle, fachliche Schwerpunkte und Interaktions-Levels gewählt haben, erscheint hier ein Formulierungsentwurf für § 3."}
+              </p>
+            ) : (
+              <div className="space-y-3 text-xs leading-relaxed text-slate-800">
+                <p>
+                  <strong>§ 3 </strong>
+                  {L === "en"
+                    ? "Scope of services & approach"
+                    : "Leistungsumfang & Vorgehensweise"}
+                </p>
+
+                {/* (1) Zielsetzung */}
+                <p>
+                  <strong>(1) </strong>
+                  {L === "en"
+                    ? "The Contractor (AN) supports the Client (AG) as an external specialist. The work is rendered as a contract for services. What is owed is professional activity aimed at achieving the project objectives, not a specific economic success. The Contractor is not subject to any disciplinary authority of the Client."
+                    : "Der Auftragnehmer (AN) berät und unterstützt den Auftraggeber (AG) als externer Spezialist. Die Leistung wird als Dienstvertrag erbracht. Geschuldet ist das professionelle Tätigwerden zur Erreichung der vertraglich vereinbarten Ziele, nicht ein bestimmter wirtschaftlicher Erfolg. Der AN unterliegt keiner disziplinarischen Weisungsbefugnis des AG."}
+                </p>
+
+                {/* (2) Rolle */}
+                <p>
+                  <strong>(2) </strong>
+                  {L === "en"
+                    ? "Subject of performance (role). Based on the selection in the briefing, the Contractor renders the following core service:"
+                    : "Leistungsgegenstand (Rolle). Basierend auf der Auswahl im Briefing erbringt der AN folgende Kernleistung:"}
+                </p>
+
+                {mainRole && (
+                  <div className="ml-4">
+                    <p>
+                      <strong>• {mainRole.heading[L]}</strong>
+                    </p>
+                    <p>{mainRole.body[L]}</p>
+                  </div>
+                )}
+
+                {/* (3) Skills */}
+                <p>
+                  <strong>(3) </strong>
+                  {L === "en"
+                    ? "Professional focus areas (skills) as selected in the briefing:"
+                    : "Fachliche Schwerpunkte (Skills) gemäß Auswahl im Briefing:"}
+                </p>
+                {selectedSkills.length ? (
+                  <ul className="list-disc ml-6">
+                    {selectedSkills.map((s) => (
+                      <li key={s.id}>{s.title[L]}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="ml-4 text-slate-600">
+                    {L === "en"
+                      ? "No specific skills selected; the mandate remains generalist."
+                      : "Keine spezifischen Skills ausgewählt; das Mandat bleibt generalistisch gefasst."}
+                  </p>
+                )}
+
+                {/* (4) Interaktions-Level */}
+                <p>
+                  <strong>(4) </strong>
+                  {L === "en"
+                    ? "Interaction level & engagement (modus operandi). The way the service is provided is defined by the selected psychosocial level and caring level."
+                    : "Interaktions-Level & Engagement (Modus Operandi). Die Art der Leistungserbringung wird durch das gewählte psychosoziale Level und das Caring-Level bestimmt."}
+                </p>
+
+                <div className="ml-4 space-y-1">
+                  <p>
+                    <strong>
+                      {L === "en"
+                        ? "a) Psychosocial intervention level:"
+                        : "a) Psychosoziale Intervention (System-Tiefe): "}
+                    </strong>
+                    {psych
+                      ? psych.name[L]
+                      : L === "en"
+                      ? "none explicitly selected."
+                      : "kein Level explizit gewählt."}
+                  </p>
+                  <p>
+                    <strong>
+                      {L === "en"
+                        ? "b) Degree of emotional investment (caring):"
+                        : "b) Grad der emotionalen Investition (Caring): "}
+                    </strong>
+                    {caring
+                      ? caring.name[L]
+                      : L === "en"
+                      ? "none explicitly selected."
+                      : "kein Level explizit gewählt."}
+                  </p>
+                </div>
+
+                {/* (5) Meta-Klärung */}
+                <p>
+                  <strong>(5) </strong>
+                  {L === "en"
+                    ? "Clarification of terminology (meta-clarification). Normal clarifications regarding language, roles and responsibilities are included in the scope. If linguistic or semantic discussions repeatedly hinder project progress and measurably draw attention away from the project goal, their structured resolution (meta-clarification) is treated as a separate advisory service and may – after mutual agreement – be invoiced as a change request or additional time budget."
+                    : "Klärung von Begrifflichkeiten (Meta-Klärung). Übliche Klärungen zu Sprache, Rollen und Verantwortlichkeiten sind im Leistungsumfang enthalten. Ab dem Punkt, an dem sich sprachliche oder semantische Diskussionen wiederholt im Kreis drehen und messbar Aufmerksamkeit vom Projektziel abziehen, gilt deren strukturierte Auflösung (Meta-Klärung) als eigenständige Beratungsleistung und kann – nach vorheriger Abstimmung – als Change Request bzw. Zusatzkontingent abgerechnet werden."}
+                </p>
+
+                {/* (6) Exklusionen */}
+                <p>
+                  <strong>(6) </strong>
+                  {L === "en"
+                    ? "Exclusions (non-performance). Unless expressly agreed otherwise, the mandate does not include: legal or tax advice, disciplinary personnel responsibility (hirings, warnings, salary negotiations), assumption of corporate body responsibility, or the achievement of a result that depends on third parties over whom the Contractor has no direct control."
+                    : "Exklusionen (Nicht-Leistung). Sofern nicht ausdrücklich anders vereinbart, umfasst das Mandat nicht: Rechts- und Steuerberatung, disziplinarische Personalverantwortung (Einstellungen, Abmahnungen, Gehaltsgespräche), Übernahme von Organverantwortung sowie die Herbeiführung eines Erfolgs, der von der Mitwirkung Dritter abhängt, auf die der AN keinen direkten Zugriff hat."}
+                </p>
+              </div>
+            )}
+          </section>
         </>
       )}
+      {/* Footer-Aktion auf der Offer-Seite */}
+      <section className="flex justify-end mt-4">
+        <Link
+          href="/confirm"
+          className="rounded-full bg-slate-900 text-white px-4 py-2 text-xs hover:bg-slate-800 transition"
+        >
+          {L === "en"
+            ? "Continue: Release & confirmation"
+            : "Weiter: Freigabe & Bestätigung"}
+        </Link>
+      </section>
     </main>
   );
 }
