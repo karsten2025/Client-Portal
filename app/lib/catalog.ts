@@ -135,12 +135,12 @@ export const SKILLS: Skill[] = [
   {
     id: "living-systems",
     title: {
-      de: "Living systems creator",
-      en: "Living systems creator",
+      de: "Resiliente Unternehmens/Organisations-Architektur (Living Systems)",
+      en: "Resilient Enterprise/Organizational Architecture (Living Systems)",
     },
     offerShort: {
-      de: "Gestaltung resilienter, lernfähiger Arbeitsumgebungen und Organisationsstrukturen.",
-      en: "Design of resilient, learning workplace environments and organisational structures.",
+      de: "Gestaltung anpassungsfähiger Arbeitsumgebungen und lernender Strukturen.",
+      en: "Design of adaptive work environments and learning structures.",
     },
     needPlaceholder: {
       de: "[ Hier beschreiben Sie Ihren Bedarf… ]",
@@ -154,12 +154,12 @@ export const SKILLS: Skill[] = [
   {
     id: "complex-systems",
     title: {
-      de: "Complex adaptive systems creator",
-      en: "Complex adaptive systems creator",
+      de: "Komplexitätsmanagement & System-Design (CAS)",
+      en: "Complexity Management & System Design (CAS)",
     },
     offerShort: {
-      de: "Design von Prozessen & Teams (basierend auf Komplexitätstheorie) für unvorhersehbare Märkte.",
-      en: "Design of processes & teams (complexity-based) for unpredictable markets.",
+      de: "Design von Prozessen für unvorhersehbare Märkte (basierend auf Komplexitätstheorie).",
+      en: "Design of processes for unpredictable markets (based on complexity theory).",
     },
     needPlaceholder: {
       de: "[ Hier beschreiben Sie Ihren Bedarf… ]",
@@ -173,12 +173,12 @@ export const SKILLS: Skill[] = [
   {
     id: "eng",
     title: {
-      de: "Ingenieurtätigkeiten",
-      en: "Engineering activities",
+      de: "ITechnische Beratung & Analyse (Engineering)",
+      en: "Technical Consulting & Analysis (Engineering)",
     },
     offerShort: {
-      de: "Technisches Verständnis & Analysefähigkeit für komplexe (z. B. mech.) Sachverhalte.",
-      en: "Technical understanding & analysis for complex (e.g., mech.) topics.",
+      de: "Technisches Verständnis & analytische Bewertung komplexer Sachverhalte (als Dipl.-Ing.(FH)).",
+      en: "Technical understanding & analytical assessment of complex matters (as M.Eng.).",
     },
     needPlaceholder: {
       de: "[ Hier beschreiben Sie Ihren Bedarf… ]",
@@ -193,7 +193,7 @@ export const SKILLS: Skill[] = [
     id: "pm-waterfall",
     title: {
       de: "PM klassisch (Wasserfall)",
-      en: "Project management (waterfall)",
+      en: "Project management classic (waterfall)",
     },
     offerShort: {
       de: "Struktur, Planung & Steuerung nach etablierten Standards (z. B. PMP/PRINCE2).",
@@ -210,14 +210,17 @@ export const SKILLS: Skill[] = [
   },
   {
     id: "pm-agile",
-    title: { de: "PM agil", en: "PM agile" },
+    title: {
+      de: "Projektmanagement Agil (Scrum/Kanban etc.)",
+      en: "Project Management Agile (Scrum/Kanban etc.)",
+    },
     offerShort: {
-      de: "Iterative Steuerung, Wertfokus, Coaching von Teams (z. B. Scrum, SAFe).",
-      en: "Iterative delivery, value focus, team coaching (e.g., Scrum, SAFe).",
+      de: "IIterative Steuerung, Wertfokus und methodisches Coaching von Teams.",
+      en: "Iterative control, value focus, and methodical coaching of teams.",
     },
     needPlaceholder: {
-      de: "[ z. B. Einführung von Scrum in 3 Teams… ]",
-      en: "[ e.g., introduce Scrum to 3 teams… ]",
+      de: "[ z. B. Einführung von Scrum/Kanabn in 3 Teams… ]",
+      en: "[ e.g., introduce Scrum/Kanban to 3 teams… ]",
     },
     outcomePlaceholder: {
       de: "[ z. B. Teams arbeiten in Sprints, Velocity messbar… ]",
@@ -226,10 +229,10 @@ export const SKILLS: Skill[] = [
   },
   {
     id: "pm-hybrid",
-    title: { de: "PM hybrid", en: "PM hybrid" },
+    title: { de: "Projektmanagement Hybrid", en: "Project Management Hybrid" },
     offerShort: {
-      de: "Integration klassischer (Hardware) und agiler (Software) Methoden.",
-      en: "Blend hardware-style and agile/software practices.",
+      de: "Integrative Verzahnung klassischer (Hardware) und agiler (Software) Methoden.",
+      en: "Integrative interlocking of classic (hardware) and agile (software) methods.",
     },
     needPlaceholder: {
       de: "[ z. B. Hardware trifft Software… ]",
@@ -242,10 +245,13 @@ export const SKILLS: Skill[] = [
   },
   {
     id: "process",
-    title: { de: "Prozessmanagement", en: "Process management" },
+    title: {
+      de: "Prozessmanagement-Beratung (BPMN)",
+      en: "Process Management Consulting (BPMN)",
+    },
     offerShort: {
-      de: "Analyse, Design und Optimierung von Geschäftsabläufen (z. B. BPMN).",
-      en: "Analysis, design, optimisation of business processes (e.g., BPMN).",
+      de: "Analyse, Konzeption und Begleitung der Optimierung von Geschäftsabläufen.",
+      en: "Analysis, conception, and support in the optimization of business processes.",
     },
     needPlaceholder: {
       de: "[ z. B. Unser Onboarding-Prozess ist ineffizient… ]",
@@ -258,10 +264,13 @@ export const SKILLS: Skill[] = [
   },
   {
     id: "quality",
-    title: { de: "Qualitätsmanagement", en: "Quality management" },
+    title: {
+      de: "Qualitätsmanagement-Support",
+      en: "Quality Management Support",
+    },
     offerShort: {
-      de: "Sicherstellung von Standards und Ergebnissen (z. B. ISO, Audit-Vorbereitung).",
-      en: "Assure standards & outcomes (e.g., ISO, audit readiness).",
+      de: "Etablierung von Standards und methodische Vorbereitung interner/externer Audits (z. B. ISO).",
+      en: "Establishment of standards and methodical preparation for internal/external audits (e.g., ISO).",
     },
     needPlaceholder: {
       de: "[ z. B. Reklamationen reduzieren… ]",
@@ -274,10 +283,10 @@ export const SKILLS: Skill[] = [
   },
   {
     id: "pmo",
-    title: { de: "PMO-Ausrichtung", en: "PMO alignment" },
+    title: { de: "PMO-Consulting & Setup", en: "PMO Consulting & Setup" },
     offerShort: {
-      de: "Aufbau & Steuerung (Strategisch, Taktisch, Operational) von PMOs.",
-      en: "Build & steer PMOs (strategic, tactical, operational).",
+      de: "Aufbau & operative Steuerung (Strategisch/Taktisch) von Project Management Offices.",
+      en: "Setup & operational control (Strategic/Tactical) of Project Management Offices.",
     },
     needPlaceholder: {
       de: "[ z. B. PMO liefert keine strategischen Inputs… ]",
@@ -290,10 +299,13 @@ export const SKILLS: Skill[] = [
   },
   {
     id: "cognitive",
-    title: { de: "Cognitive Projekte (KI)", en: "Cognitive projects (AI)" },
+    title: {
+      de: "KI & Kognitives Projektmanagement",
+      en: "AI & Cognitive Project Management",
+    },
     offerShort: {
-      de: "Management von KI/Automatisierungs-Initiativen; Brücke zwischen Business & Data Science.",
-      en: "Run AI/automation initiatives; bridge business & data science.",
+      de: "Management von KI-Initiativen: Schnittstellen-Management zwischen Business & Data Science.",
+      en: "Management of AI initiatives: Interface management between Business & Data Science.",
     },
     needPlaceholder: {
       de: "[ z. B. Pilotprojekt ‚RPA‘ muss gesteuert werden… ]",
@@ -306,10 +318,13 @@ export const SKILLS: Skill[] = [
   },
   {
     id: "teamlead",
-    title: { de: "Gruppen-Ausrichtung (Leitung)", en: "Team leadership" },
+    title: {
+      de: "Team-Koordination & Laterale Führung",
+      en: "Team Coordination & Lateral Leadership",
+    },
     offerShort: {
-      de: "Fachliche oder disziplinarische Führung von Teams oder Projektgruppen.",
-      en: "Functional or disciplinary leadership of teams/project groups.",
+      de: "FFachliche Steuerung von Teams und operative Koordination ohne Disziplinarbefugnis.",
+      en: "Functional steering of teams and operational coordination without disciplinary authority.",
     },
     needPlaceholder: {
       de: "[ z. B. Teamleiter X ist ausgefallen… ]",
@@ -322,10 +337,13 @@ export const SKILLS: Skill[] = [
   },
   {
     id: "deptlead",
-    title: { de: "Abteilungsleitung", en: "Department leadership" },
+    title: {
+      de: "Interim Management (PMO / Fachbereich)",
+      en: "nterim Management (PMO / Department)",
+    },
     offerShort: {
-      de: "Temporäre Übernahme der vollen Linienverantwortung (z. B. als ‚Head of PMO‘).",
-      en: "Temporary full line responsibility (e.g., Head of PMO).",
+      de: "Temporäre Übernahme von Management-Aufgaben und Prozessverantwortung auf Mandatsbasis.",
+      en: "Temporary assumption of management tasks and process responsibility on a mandate basis.",
     },
     needPlaceholder: {
       de: "[ z. B. Vakanz für 6 Monate überbrücken… ]",
