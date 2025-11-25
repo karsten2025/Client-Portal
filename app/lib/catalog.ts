@@ -323,7 +323,7 @@ export const SKILLS: Skill[] = [
       en: "Team Coordination & Lateral Leadership",
     },
     offerShort: {
-      de: "FFachliche Steuerung von Teams und operative Koordination ohne Disziplinarbefugnis.",
+      de: "Fachliche Steuerung von Teams und operative Koordination ohne Disziplinarbefugnis.",
       en: "Functional steering of teams and operational coordination without disciplinary authority.",
     },
     needPlaceholder: {
@@ -339,7 +339,7 @@ export const SKILLS: Skill[] = [
     id: "deptlead",
     title: {
       de: "Interim Management (PMO / Fachbereich)",
-      en: "nterim Management (PMO / Department)",
+      en: "Interim Management (PMO / Department)",
     },
     offerShort: {
       de: "Temporäre Übernahme von Management-Aufgaben und Prozessverantwortung auf Mandatsbasis.",
