@@ -1,3 +1,4 @@
+// app/explore/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -53,24 +54,25 @@ const TEXT: Record<
     },
     cards: {
       sys: {
-        title: "Ganzheitliche Erfolgssteuerung (Interim Management)",
+        title:
+          "Interim Management & Produkt, Projekt, Programm & Portfolio-Steuerung",
         blurb:
-          "Ich übernehme die Verantwortung für Ihre Management-Aufgaben – sei es in der Linie (als temporäre Abteilungsleitung) oder im strategischen Portfolio (Produkt, Programm, Projekt) – und bringe Ihre Einheiten auf Kurs.",
+          "Ich bringe Ihre kritischen Initiativen auf Kurs. Als Interim-Manager übernehme ich temporär die operative Steuerung Ihrer Projekte oder Portfolios, schließe Vakanzen und sorge dafür, dass Ergebnisse pünktlich geliefert werden – ohne Reibungsverluste.",
       },
       ops: {
         title: "Betriebssystem Performer",
         blurb:
-          "Wir richten Prozesse, Systeme und Teams auf messbare Performance, Effizienz und Skalierbarkeit aus – ergebnisorientiert.",
+          "Ich richte Ihre Prozesse und Systeme auf Skalierbarkeit aus. Ich analysiere Ihre Wertschöpfungsketten und transformiere starre Abläufe in ein leistungsfähiges „Betriebssystem“, das Ihre Teams entlastet und messbare Effizienz schafft.",
       },
       res: {
         title: "Strategische Resonanz-Steuerung",
         blurb:
-          "Ich navigiere anspruchsvolle Stakeholder-Landschaften, übersetze Erwartungen und sorge dafür, dass Botschaften die richtigen Empfänger erreichen.",
+          "Ich navigiere Sie durch anspruchsvolle Stakeholder-Landschaften. Ich übersetze Erwartungen zwischen Fachebene und Management, löse politische Blockaden auf und sorge dafür, dass Ihre Botschaften bei den richtigen Entscheidern ankommen.",
       },
       coach: {
         title: "Sparring / Coaching (Lead, Team)",
         blurb:
-          "Strukturiertes Sparring in komplexen Lagen: Klarheit, Entscheidungen, Handlungsfähigkeit.",
+          "Ich stehe Ihnen als „Thinking Partner“ zur Seite. In komplexen Lagen sorge ich durch strukturiertes Sparring für Klarheit, befähige Ihre Schlüsselspieler methodisch und helfe Ihnen, tragfähige Entscheidungen zu treffen.",
       },
     },
   },
@@ -89,24 +91,25 @@ const TEXT: Record<
     },
     cards: {
       sys: {
-        title: "Holistic delivery steering (Interim Management)",
+        title:
+          "Interim Management & Product, Project, Program & Portfolio Management",
         blurb:
-          "I take full responsibility for your management mandates—whether in line management (as an interim Head of Department) or steering your strategic portfolio (product, program, project)—and get your units back on course.",
+          "I get your critical initiatives on track. As an interim manager, I temporarily assume operational control of your projects or portfolios, bridge vacancies, and ensure results are delivered on time—without friction.",
       },
       ops: {
         title: "Operating system performance",
         blurb:
-          "We design processes, systems and teams for measurable performance, efficiency and scalability.",
+          "I align your processes and systems for scalability. I analyze your value chains and transform rigid workflows into a high-performance operating system that relieves your teams and creates measurable efficiency.",
       },
       res: {
         title: "Strategic resonance steering",
         blurb:
-          "I navigate demanding stakeholder landscapes and ensure your messages reach the right people in the right tone.",
+          "I navigate you through demanding stakeholder landscapes. I translate expectations between technical teams and management, resolve political blockades, and ensure your messages land with the right decision-makers.",
       },
       coach: {
         title: "Sparring / Coaching (leadership & teams)",
         blurb:
-          "Structured reflection and decision support in complex situations for clear, confident action.",
+          "I stand by your side as a Thinking Partner In complex situations, I ensure clarity through structured sparring, methodically empower your key players, and help you make viable decisions.",
       },
     },
   },
@@ -138,70 +141,72 @@ export default function ExplorePage() {
   }
 
   return (
-    <main className="max-w-6xl mx-auto p-6 space-y-8">
-      {/* Header mit Language Switch */}
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">{t.title}</h1>
-          <p className="text-sm text-gray-600">{t.subtitle}</p>
+    <main className="min-h-screen w-full bg-slate-50">
+      <div className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+        {/* Header mit Language Switch */}
+        <header className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold">{t.title}</h1>
+            <p className="text-sm text-gray-600">{t.subtitle}</p>
+          </div>
+          <LanguageSwitcher />
+        </header>
+
+        {/* Prozessanzeige: Schritt 1 (Explore) */}
+        <ProcessBar current="explore" />
+
+        {/* Karten-Auswahl */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {CARDS.map((c) => {
+            const active = selected.includes(c.id);
+            const cardText = t.cards[c.id];
+
+            return (
+              <div
+                key={c.id}
+                className={`${CARD_BASE} ${
+                  active ? "border-black bg-gray-50" : "border-gray-200"
+                }`}
+              >
+                {/* Badge oben rechts */}
+                <div className="absolute right-3 top-3">
+                  <span className={BADGE}>
+                    <span className="font-medium">{t.ranks[c.id]}</span>
+                    <span aria-hidden="true">{c.suit}</span>
+                  </span>
+                </div>
+
+                {/* Inhalt */}
+                <div className="flex-1 min-w-0 overflow-y-auto pr-1">
+                  <h3 className="font-semibold text-lg leading-snug">
+                    {cardText.title}
+                  </h3>
+                  <p className="mt-3 text-sm text-gray-700">{cardText.blurb}</p>
+                </div>
+
+                {/* Button */}
+                <div className="pt-4">
+                  <button
+                    onClick={() => toggle(c.id)}
+                    className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-100 w-full text-center"
+                  >
+                    {active ? t.buttonRemove : t.buttonAdd}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
-        <LanguageSwitcher />
-      </header>
 
-      {/* Prozessanzeige: Schritt 1 (Explore) */}
-      <ProcessBar current="explore" />
-
-      {/* Karten-Auswahl */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {CARDS.map((c) => {
-          const active = selected.includes(c.id);
-          const cardText = t.cards[c.id];
-
-          return (
-            <div
-              key={c.id}
-              className={`${CARD_BASE} ${
-                active ? "border-black bg-gray-50" : "border-gray-200"
-              }`}
-            >
-              {/* Badge oben rechts */}
-              <div className="absolute right-3 top-3">
-                <span className={BADGE}>
-                  <span className="font-medium">{t.ranks[c.id]}</span>
-                  <span aria-hidden="true">{c.suit}</span>
-                </span>
-              </div>
-
-              {/* Inhalt */}
-              <div className="flex-1 min-w-0 overflow-y-auto pr-1">
-                <h3 className="font-semibold text-lg leading-snug">
-                  {cardText.title}
-                </h3>
-                <p className="mt-3 text-sm text-gray-700">{cardText.blurb}</p>
-              </div>
-
-              {/* Button */}
-              <div className="pt-4">
-                <button
-                  onClick={() => toggle(c.id)}
-                  className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-100 w-full text-center"
-                >
-                  {active ? t.buttonRemove : t.buttonAdd}
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Weiter-Button */}
-      <div className="flex justify-end">
-        <Link
-          href={`/brief?lang=${lang}`}
-          className="rounded-lg bg-black text-white px-4 py-2 text-sm"
-        >
-          {t.next}
-        </Link>
+        {/* Weiter-Button */}
+        <div className="flex justify-end">
+          <Link
+            href={`/brief?lang=${lang}`}
+            className="rounded-lg bg-black text-white px-4 py-2 text-sm"
+          >
+            {t.next}
+          </Link>
+        </div>
       </div>
     </main>
   );
