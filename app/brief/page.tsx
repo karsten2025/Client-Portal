@@ -2,22 +2,20 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+
 import {
   BEHAVIORS,
   SKILLS,
   PSYCHO_PACKAGES,
   CARING_PACKAGES,
   LOCAL_KEYS,
-  Lang,
-  BehaviorId,
-  PsychoId,
-  CaringId,
 } from "../lib/catalog";
+import type { Lang, BehaviorId, PsychoId, CaringId } from "../lib/catalog";
 import { useLanguage } from "../lang/LanguageContext";
 import { tPair } from "../lib/i18n";
 import { ProcessBar } from "../components/ProcessBar";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
-import Link from "next/link";
 import { validateSelection } from "../lib/mandateRules";
 
 type Notes = Record<string, { need?: string; outcome?: string }>;
@@ -145,6 +143,21 @@ export default function BriefPage() {
       setPsychoId(recommendedPsychoId);
     }
   }, [recommendedPsychoId, psychoId]);
+
+  // Aktuell gewählte Pakete für 5a/5b inkl. Faktor
+  const psychoPackage = useMemo(
+    () => PSYCHO_PACKAGES.find((p) => p.id === psychoId) ?? null,
+    [psychoId]
+  );
+  const caringPackage = useMemo(
+    () => CARING_PACKAGES.find((c) => c.id === caringId) ?? null,
+    [caringId]
+  );
+
+  const psychoFactor = psychoPackage?.priceFactor ?? 1;
+  const caringFactor = caringPackage?.priceFactor ?? 1;
+  const hasFactorSelection = !!psychoPackage || !!caringPackage;
+  const combinedFactor = hasFactorSelection ? psychoFactor * caringFactor : 1;
 
   const label = (de: string, en: string) => tPair(L, de, en);
 
@@ -393,7 +406,7 @@ export default function BriefPage() {
         <p className="text-sm text-slate-700">
           {L === "en"
             ? "Here you define the depth of system intervention and how much emotional investment is part of the mandate. Think of it as the emotional insurance premium."
-            : "Hier legen Sie die Tiefe der System-Intervention und den Grad der emotionalen Investition fest – gewissermaßen die emotionale Versicherungspämie des Mandats."}
+            : "Hier legen Sie die Tiefe der System-Intervention und den Grad der emotionalen Investition fest – gewissermaßen die emotionale Versicherungsprämie des Mandats."}
         </p>
 
         {/* 5a – Psychosoziale Interventions-Level */}
@@ -486,6 +499,7 @@ export default function BriefPage() {
         </details>
 
         {/* 5b – Caring-Level */}
+        {/* 5b – Caring-Level */}
         <details
           className="rounded-lg border border-slate-300 bg-slate-50 p-3 space-y-3 shadow-xs"
           open
@@ -498,8 +512,8 @@ export default function BriefPage() {
 
           <p className="text-xs text-slate-700">
             {L === "en"
-              ? "Here you decide how much the fate of the project is allowed to affect the sleep of your project manager."
-              : "Hier entscheiden Sie, wie sehr das Schicksal des Projekts den Schlaf des Projektmanagers beeinflussen darf."}
+              ? "Here you choose the desired engagement level: pure execution, active stakeholder engagement or maximum result dedication."
+              : "Hier wählen Sie, welches Engagement-Level Sie wünschen: reine Auftragsabwicklung, aktives Stakeholder-Engagement oder maximale Ergebnis-Dedikation."}
           </p>
 
           <div className="grid md:grid-cols-3 gap-3">
@@ -532,21 +546,36 @@ export default function BriefPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* kurze Beschreibung */}
                   <div className="text-[11px] text-slate-800">
                     {(c as any).definition?.[L] ?? ""}
                   </div>
+
+                  {/* Angebot (optional) */}
                   <div className="text-[11px] text-slate-800">
                     <strong>{label("Angebot: ", "Offer: ")}</strong>
                     {(c as any).offer?.[L] ?? ""}
                   </div>
-                  <div className="text-[11px] text-slate-800">
-                    <strong>{label("Inklusion: ", "Includes: ")}</strong>
+
+                  {/* exakt gleiche Reihenfolge & Labels wie 5a */}
+                  <div className="text-[11px] text-slate-800 mt-1">
+                    <strong>
+                      {L === "en" ? "Includes: " : "Inklusion (Doing): "}
+                    </strong>
                     {(c as any).inclusion?.[L] ?? ""}
                   </div>
                   <div className="text-[11px] text-slate-800">
-                    <strong>{label("Exklusion: ", "Excludes: ")}</strong>
+                    <strong>
+                      {L === "en" ? "Excludes: " : "Exklusion (Not Doing): "}
+                    </strong>
                     {(c as any).exclusion?.[L] ?? ""}
                   </div>
+                  <div className="text-[11px] text-slate-800">
+                    <strong>{label("Ihr Nutzen: ", "Benefit: ")}</strong>
+                    {c.benefit[L]}
+                  </div>
+
                   <div className="text-[11px] font-semibold mt-1 text-slate-900">
                     {(c as any).priceLabel?.[L] ?? ""}
                   </div>
@@ -560,7 +589,36 @@ export default function BriefPage() {
               ? "Later in the offer we can make explicit what is not included: for example, if you choose level A, cultural integration and deep conflict moderation stay explicitly with the client."
               : "Im Angebot kann später explizit sichtbar werden, was nicht gekauft wurde: Wählt der Auftraggeber z. B. Level A, bleiben kulturelle Integration und tiefe Konfliktmoderation ausdrücklich in seiner Verantwortung."}
           </p>
+
+          <div className="mt-2 rounded-md border border-amber-300 bg-amber-50 p-2 flex gap-2 text-[11px] text-amber-900">
+            <span className="mt-0.5">⚖️</span>
+            <div>
+              <p>
+                {L === "en"
+                  ? "We know that terms can be emotionally charged and live in different interpretations. Normal clarifications around language, roles and responsibilities are included in the scope."
+                  : "Wir wissen, dass Begriffe emotional aufgeladen sein können und unterschiedliche Deutungsräume haben. Übliche Klärungen zu Sprache, Rollen und Verantwortlichkeiten sind im Leistungsumfang enthalten."}
+              </p>
+              <p className="mt-1">
+                {L === "en"
+                  ? "Once linguistic or semantic discussions start to repeatedly go in circles and measurably pull attention away from the project goal, they are treated as a separate advisory service (meta-clarification). This may – after mutual agreement – be billed separately as a change / additional time budget."
+                  : "Ab dem Punkt, an dem sich sprachliche oder semantische Diskussionen wiederholt im Kreis drehen und messbar Aufmerksamkeit vom Projektziel abziehen, gelten sie als eigenständige Beratungsleistung (Meta-Klärung). Diese kann – nach vorheriger Absprache – gesondert als Change / Zusatzkontingent abgerechnet werden."}
+              </p>
+            </div>
+          </div>
         </details>
+
+        {/* Faktor-Hinweis für 5a/5b kombiniert */}
+        {hasFactorSelection && (
+          <p className="text-[11px] text-slate-700 mt-1">
+            {L === "en"
+              ? `Current factor on the base day rate: ${combinedFactor.toFixed(
+                  2
+                )} (psychosocial level × caring). The concrete day rate is calculated in the next step on the offer page.`
+              : `Aktueller Faktor auf den Basis-Tagessatz: ${combinedFactor.toFixed(
+                  2
+                )} (psychosoziales Level × Caring). Die konkrete Tagessatz-Berechnung sehen Sie im nächsten Schritt im Angebots-Entwurf.`}
+          </p>
+        )}
       </section>
 
       {/* Footer-Aktion */}

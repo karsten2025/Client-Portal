@@ -38,12 +38,12 @@ export const BEHAVIORS: Behavior[] = [
       en: "The neutral helmsman",
     },
     style: {
-      de: "Objektivität, Mandatsklarheit, strikte Abgrenzung (Externalität).",
-      en: "Objectivity, mandate clarity, strict boundary (externality).",
+      de: "Objektivität, Mandatsklarheit, Fokus auf Fortschritt.",
+      en: "Objectivity, mandate clarity, focus on progress",
     },
     outcome: {
-      de: "Messbare Strategie-Umsetzung.",
-      en: "Measurable strategy execution.",
+      de: "Systematische Begleitung der Strategie-Realisierung & maximale Transparenz.",
+      en: "Systematic support for strategy realization & maximum transparency.",
     },
   },
   {
@@ -53,16 +53,16 @@ export const BEHAVIORS: Behavior[] = [
       en: "Highly political environment",
     },
     pkg: {
-      de: "Der Allparteiliche Mediator",
-      en: "The all-party mediator",
+      de: "Mediator",
+      en: "Mediator",
     },
     style: {
-      de: "System-Mediation, Konsens-Findung, politische Sensitivität.",
-      en: "System mediation, consensus building, political sensitivity.",
+      de: "System-Mediation, Konsens-Förderung, politische Sensitivität.",
+      en: "Systemic moderation, consensus building, political sensitivity.",
     },
     outcome: {
-      de: "Auflösung von Blockaden, tragfähiges Mandat.",
-      en: "Removes blockages, viable mandate.",
+      de: "Professionelles Konfliktmanagement & Wiederherstellung der Handlungsfähigkeit.",
+      en: "Professional conflict management & restoration of operational capability.",
     },
   },
   {
@@ -72,16 +72,16 @@ export const BEHAVIORS: Behavior[] = [
       en: "Strong growth / chaos",
     },
     pkg: {
-      de: "Der Pragmatische Stabilisator",
-      en: "The pragmatic stabilizer",
+      de: "Stabilisator",
+      en: "Stabilizer",
     },
     style: {
-      de: "Schnelle Analyse (80/20), Fokus auf „Good enough“-Strukturen.",
-      en: "Rapid 80/20 analysis, focus on good-enough structures.",
+      de: "Schnelle Analyse (80/20), Fokus auf effiziente Strukturen.",
+      en: "Rapid analysis (80/20), focus on efficient structures.",
     },
     outcome: {
-      de: "Schnelle Entlastung, skalierfähige Minimal-Prozesse.",
-      en: "Quick relief, scalable minimal processes.",
+      de: "Spürbare operative Entlastung & Etablierung schlanker, skalierbarer Prozesse.",
+      en: "Tangible operational relief & establishment of lean, scalable processes.",
     },
   },
   {
@@ -91,16 +91,16 @@ export const BEHAVIORS: Behavior[] = [
       en: "Acute crisis / turnaround",
     },
     pkg: {
-      de: "Der Konsequente Sanierer",
-      en: "The decisive turnaround lead",
+      de: "Sanierer",
+      en: "Turnaround lead",
     },
     style: {
-      de: "Klare Direktiven (Top-Down), Fokus auf kurzfristige Ergebnisse.",
-      en: "Clear top-down directives, focus on short-term results.",
+      de: "Konsequente Priorisierung, engmaschige Steuerung, Fokus auf Sofort-Maßnahmen",
+      en: "Consistent prioritization, close monitoring, focus on immediate measures.",
     },
     outcome: {
-      de: "Abwendung der Krise, Stabilisierung.",
-      en: "Crisis averted, stabilisation.",
+      de: "Aktives Krisenmanagement & Stabilisierung der Situation.",
+      en: "Active crisis management & stabilization of the situation.",
     },
   },
 ];
@@ -370,16 +370,16 @@ export const PSYCH_LEVELS: Level[] = [
   {
     id: "psych-a",
     name: {
-      de: "Paket A: Der Transparenz-Architekt (Basis-Level)",
-      en: "Package A: Transparency architect (base level)",
+      de: "Paket A: Der Struktur-Architekt (Basis-Level)",
+      en: "Package A: The Structure Architect (Basic Level)",
     },
     focus: {
-      de: "Fokus auf Ordnung & Struktur.",
+      de: "Fokus auf Ordnung & Transparenz.",
       en: "Focus on order and structure.",
     },
     benefit: {
-      de: "Maximale administrative Sicherheit und Planbarkeit (Compliance).",
-      en: "Maximum administrative safety and planning reliability (compliance).",
+      de: "Hohe administrative Transparenz und verbesserte Planbarkeit (Compliance).",
+      en: "High administrative transparency and improved planning certainty (Compliance).",
     },
     priceFactor: 1.0,
     level: {
@@ -387,12 +387,12 @@ export const PSYCH_LEVELS: Level[] = [
       en: "Base level",
     },
     include: {
-      de: "Transparenz über Rollen, Prozesse und Entscheidungswege.",
-      en: "Transparency regarding roles, processes and decision paths.",
+      de: "Schaffung von Klarheit über Rollen, Prozesse und Entscheidungswege.",
+      en: "Creating clarity regarding roles, processes, and decision-making paths.",
     },
     exclude: {
-      de: "Tiefe Konfliktmoderation, Trauma-Arbeit oder Therapie.",
-      en: "Deep conflict moderation, trauma work or therapy.",
+      de: "Keine tiefenpsychologische Konfliktintervention oder persönliche Krisenbegleitung.",
+      en: "No deep psychological conflict intervention or personal crisis counseling.",
     },
     factorLabel: {
       de: "Faktor 1,0 (Basis-Intervention)",
@@ -407,11 +407,11 @@ export const PSYCH_LEVELS: Level[] = [
     },
     focus: {
       de: "Fokus auf Team-Schutz & Befähigung.",
-      en: "Focus on team protection and empowerment.",
+      en: "Focus on Team Protection & Enablement.",
     },
     benefit: {
-      de: "Stabile, hochperformante Teams und reduzierte Fluktuation in Stressphasen.",
-      en: "Stable, high-performing teams and reduced turnover in stressful phases.",
+      de: "Stabile, leistungsfähige Teams und reduzierte Reibungsverluste in Stressphasen.",
+      en: "Stable, high-performing teams and reduced friction during stressful phases.",
     },
     priceFactor: 1.5,
     level: {
@@ -420,11 +420,11 @@ export const PSYCH_LEVELS: Level[] = [
     },
     include: {
       de: "Regelmäßige Team-Reflexionen, Konfliktmoderation im Team, Aufbau von Resilienz-Routinen.",
-      en: "Regular team reflections, conflict moderation within the team, building resilience routines.",
+      en: "RRegular team reflections, moderation of tension fields, establishing resilience routines.",
     },
     exclude: {
-      de: "Unternehmensweite Kulturprogramme oder tiefgreifende Reorganisationen.",
-      en: "Company-wide culture programs or deep reorganisations.",
+      de: "Therapeutischen Maßnahmen oder unternehmensweite Kulturprogramme ohne Mandat.",
+      en: "Therapeutic measures or company-wide culture programs without a specific mandate.",
     },
     factorLabel: {
       de: "Faktor 1,5 (erweitertes Mandat)",
@@ -442,8 +442,8 @@ export const PSYCH_LEVELS: Level[] = [
       en: "Focus on stakeholder management and complexity.",
     },
     benefit: {
-      de: "Handlungsfähigkeit in politisch komplexen Umfeldern, Sicherung des Projektwerts.",
-      en: "Ability to act in politically complex environments, safeguarding project value.",
+      de: "Sicherung der Handlungsfähigkeit in politisch komplexen Umfeldern und Schutz des Wertes.",
+      en: "Ensuring ability to act in politically complex environments and protection of project value.",
     },
     priceFactor: 2.0,
     level: {
@@ -451,12 +451,12 @@ export const PSYCH_LEVELS: Level[] = [
       en: "Expert level",
     },
     include: {
-      de: "Systemische Analyse, Arbeit mit formellen und informellen Machtzentren, Gestaltung belastbarer Allianzen.",
-      en: "Systemic analysis, work with formal and informal power centres, crafting robust alliances.",
+      de: "Systemische Analyse, Arbeit mit formellen und informellen Einflussstrukturen, Gestaltung belastbarer Netzwerke.",
+      en: "SSystemic analysis, working with formal and informal influence structures, shaping resilient networks.",
     },
     exclude: {
-      de: "Übernahme der Gesamtverantwortung für Konzernpolitik oder Board-Governance.",
-      en: "Taking full responsibility for corporate politics or board governance.",
+      de: "Organhaftung (Geschäftsführung) für Konzerngesellschaften oder Konzern-Governance.",
+      en: "Executive liability (officer status) for corporate entities or corporate governance.",
     },
     factorLabel: {
       de: "Faktor 2,0 (hohe Systemkomplexität)",
@@ -469,16 +469,16 @@ export const CARING_LEVELS: Level[] = [
   {
     id: "care-a",
     name: {
-      de: "Paket A: Dienst nach Vorschrift (Maximale Indifferenz)",
-      en: "Package A: Duty only (maximum indifference)",
+      de: "Paket A: Fokus auf Auftragserfüllung (Professionelle Distanz)",
+      en: "Package A: Focus on Execution (Professional Distance)",
     },
     focus: {
-      de: "Reines Reporting & Governance, kein emotionales Mittragen.",
-      en: "Pure reporting & governance, no emotional co-ownership.",
+      de: "Sachlich, effizient, Scope-orientiert. Der Agent agiert fokussiert auf Basis der vereinbarten Deliverables.",
+      en: "Objective, efficient, scope-oriented. The project manager acts with focus, based strictly on agreed deliverables.",
     },
     benefit: {
-      de: "Günstigster Tarif – Sie zahlen nur für Methode und Präsenz.",
-      en: "Lowest rate – you pay only for method and presence.",
+      de: "Maximale Kosteneffizienz und strikte Fokussierung auf harte Fakten ohne administrativen „Overhead“",
+      en: "Maximum cost efficiency and strict focus on hard facts without administrative overhead.",
     },
     priceFactor: 1.0,
     tagline: {
@@ -486,20 +486,20 @@ export const CARING_LEVELS: Level[] = [
       en: "Professional, distant, factual.",
     },
     definition: {
-      de: "Der Projektleiter führt sauber aus, ohne sich emotional zu involvieren.",
-      en: "The project lead executes cleanly without emotional involvement.",
+      de: "Der Agent führt sauber aus, die emotionale Beteiligung beschränkt sich auf ein Minimum.",
+      en: "The agent executes cleanly, emotional involvement is kept to a minimum.",
     },
     offer: {
-      de: "Fokus auf Struktur, Reporting, Termin- und Budgettreue.",
-      en: "Focus on structure, reporting, and adherence to time and budget.",
+      de: "Fokus auf Struktur, Reporting, Termin- und Budgettreue gemäß Vertrag.",
+      en: "Focus on structure, reporting, schedule, and budget adherence according to contract.",
     },
     inclusion: {
       de: "Regelmäßige Statusberichte, Risiko-Monitoring, formale Eskalationen.",
       en: "Regular status reports, risk monitoring, formal escalations.",
     },
     exclusion: {
-      de: "Keine Kulturarbeit, keine tiefe Begleitung von Führung und Teams.",
-      en: "No culture work, no deep coaching of leadership and teams.",
+      de: "Tiefe kulturelle Integration, keine psychologische Betreuung von Führung und Teams.",
+      en: "Deep cultural integration, no psychological counseling for leadership or teams.",
     },
     priceLabel: {
       de: "Faktor 1,0 (Basis-Caring)",
@@ -509,16 +509,16 @@ export const CARING_LEVELS: Level[] = [
   {
     id: "care-b",
     name: {
-      de: "Paket B: Professionelle Empathie (Selektive Indifferenz)",
-      en: "Package B: Professional empathy (selective indifference)",
+      de: "Paket B: Aktives Stakeholder-Engagement (Servant Leadership)",
+      en: "Package B: Active Stakeholder Engagement (Servant Leadership)",
     },
     focus: {
-      de: "Konfliktmanagement & Team-Schutz, klare professionelle Distanz.",
-      en: "Conflict management & team shielding with professional distance.",
+      de: "Empathisch, teamorientiert, schützend. Der Agent kümmert sich aktiv um die Leistungsfähigkeit des Teams und das Umfeld.",
+      en: "Empathetic, team-oriented, protective. The agent actively ensures team performance and manages the environment.",
     },
     benefit: {
-      de: "Performance-orientierte Fürsorge ohne emotionale Verstrickung.",
-      en: "Performance-oriented care without emotional entanglement.",
+      de: "Reduziertes Fluktuations- und Burnout-Risiko im Team sowie höhere Produktivität durch psychologische Sicherheit.",
+      en: "Reduced risk of turnover and burnout within the team, plus higher productivity through psychological safety.",
     },
     priceFactor: 1.5,
     tagline: {
@@ -530,16 +530,16 @@ export const CARING_LEVELS: Level[] = [
       en: "The project lead visibly cares for team and stakeholders, while maintaining boundaries.",
     },
     offer: {
-      de: "Aktives Stakeholder-Management, Moderation von Spannungen, Schutz der Kernteams.",
-      en: "Active stakeholder management, tension moderation, protection of core teams.",
+      de: "Aktives Stakeholder-Management, Moderation von Spannungen, Schutz der Kernteams („Shielding“)",
+      en: "Active stakeholder management, moderation of tensions, shielding of core teams.",
     },
     inclusion: {
       de: "Einzel- und Kleingruppen-Check-ins, konstruktive Konfliktgespräche, Frühwarnsystem für Überlast.",
       en: "One-to-one and small-group check-ins, constructive conflict talks, early warning for overload.",
     },
     exclusion: {
-      de: "Kein 24/7-Ownership des Projekts, keine Übernahme von Personalverantwortung außerhalb des Mandats.",
-      en: "No 24/7 ownership of the project, no personnel responsibility beyond the mandate.",
+      de: "Übernahme disziplinarischer Personalverantwortung außerhalb des Mandats.",
+      en: "No assumption of disciplinary HR responsibility outside the mandate.",
     },
     priceLabel: {
       de: "Faktor 1,5 (erhöhtes Caring)",
@@ -549,16 +549,16 @@ export const CARING_LEVELS: Level[] = [
   {
     id: "care-c",
     name: {
-      de: "Paket C: Total Ownership (Maximale Identifikation)",
-      en: "Package C: Total ownership (maximum identification)",
+      de: "Paket C: Maximale Ergebnis-Dedikation (Unternehmerisches Denken)",
+      en: "Package C: Maximum Result Dedication (Entrepreneurial Mindset)",
     },
     focus: {
-      de: "Intrapreneurship, politische Kämpfe für das Projekt, Kulturarbeit.",
-      en: "Intrapreneurship, political fights for the project, culture work.",
+      de: "Hochidentifiziert, politisch versiert, intensiv. Der Agent vertritt die Interessen mit unternehmerischem Mindset („Act like an owner, stay a consultant“).",
+      en: "Highly identified, politically savvy, intense. The project manager represents project interests with an entrepreneurial mindset (Act like an owner, stay a consultant).",
     },
     benefit: {
-      de: "Höchster Einsatz – der Projektleiter verkauft seine Nerven und Sorge.",
-      en: "Highest commitment – the project lead literally sells their nerves and concern.",
+      de: "Maximale Entlastung des Auftraggebers und hohe Durchsetzungskraft in schwierigen politischen Gemengelagen.",
+      en: "Maximum relief for the client and high assertiveness in difficult political environments.",
     },
     priceFactor: 2.0,
     tagline: {
@@ -566,20 +566,20 @@ export const CARING_LEVELS: Level[] = [
       en: "As if it were their own company.",
     },
     definition: {
-      de: "Der Projektleiter identifiziert sich maximal mit Projekt und Organisation und geht politisch in Vorleistung.",
-      en: "The project lead identifies strongly with project and organisation and leans in politically.",
+      de: "Der Agent identifiziert sich maximal mit den Zielen des Unternehmens und geht politisch in Vorleistung.",
+      en: "The agent identifies fully with the company's goals and takes the political initiative.",
     },
     offer: {
-      de: "Aktive Kulturarbeit, politische Allianzen, hartnäckige Vertretung der Projektinteressen.",
-      en: "Active culture work, political alliances, persistent representation of project interests.",
+      de: "Intensive Präsenz in Entscheidungsgremien, aktive Gestaltung von Allianzen, hartnäckige Vertretung der Ziele.",
+      en: "Intensive presence in decision-making bodies, active shaping of alliances, persistent representation of goals.",
     },
     inclusion: {
-      de: "Hohe Verfügbarkeit, intensive Präsenz in Entscheidungsrunden, Ownership auch in Grauzonen.",
-      en: "High availability, intensive presence in decision rounds, ownership even in grey areas.",
+      de: "Hohe Verfügbarkeit, „Sparring Partner“ für das Management, Ownership für Governance-Themen.",
+      en: "High availability, Sparring Partner for management, ownership of governance topics.",
     },
     exclusion: {
-      de: "Keine Übernahme der rechtlichen Arbeitgeberfunktion oder formaler Organhaftung.",
-      en: "No assumption of legal employer function or formal director liability.",
+      de: "Organschaftliche Vertretung (GF-Haftung) oder Eingliederung in die interne Organisation.",
+      en: "Corporate executive liability (x-officer status) or integration into the internal organization.",
     },
     priceLabel: {
       de: "Faktor 2,0 (maximales Caring)",
