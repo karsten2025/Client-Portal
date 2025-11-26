@@ -43,6 +43,7 @@ export default function OfferPage() {
   const [notes, setNotes] = useState<SkillNotes>({});
   const [days, setDays] = useState<number>(5);
   const [roleIds, setRoleIds] = useState<RoleId[]>([]);
+  const [isDownloading, setIsDownloading] = useState(false); // NEW: Download-Status
 
   // Mandatslogik-Validierung
   const validation = validateSelection(
@@ -179,6 +180,79 @@ export default function OfferPage() {
 
   const isSection3VeryEmpty =
     roleIds.length === 0 && selectedSkills.length === 0 && !psych && !caring;
+
+  // 🔹 NEU: Handler für PDF-Download
+  const handleDownloadPdf = async () => {
+    try {
+      setIsDownloading(true);
+
+      // Sicherheitscheck: wenn gar nichts da ist, lohnt PDF nicht
+      if (isEmpty) {
+        alert(
+          L === "en"
+            ? "No briefing/offer data available yet. Please complete the steps first."
+            : "Es liegen noch keine Briefing-/Angebotsdaten vor. Bitte füllen Sie zuerst die Schritte aus."
+        );
+        return;
+      }
+
+      const res = await fetch("/api/offer-pdf", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          lang: L,
+          brief,
+          behaviorSummary,
+          selectedSkills: selectedSkills.map((s) => ({
+            id: s.id,
+            title: s.title,
+          })),
+          psychLabel: psychSummary,
+          caringLabel: caringSummary,
+          notes,
+          days,
+          dayRate,
+          net,
+          tax,
+          gross,
+          currency,
+          section3Input,
+        }),
+      });
+
+      if (!res.ok) {
+        console.error("PDF-API-Fehler", res.status, await res.text());
+        alert(
+          L === "en"
+            ? "Error while generating the PDF. Please try again."
+            : "Fehler beim Erzeugen der PDF. Bitte versuchen Sie es erneut."
+        );
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download =
+        L === "en" ? "offer-contract-draft.pdf" : "angebot-vertrag-entwurf.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("PDF-Download-Fehler", err);
+      alert(
+        L === "en"
+          ? "Unexpected error while generating the PDF."
+          : "Unerwarteter Fehler beim Erzeugen der PDF."
+      );
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-6 bg-slate-50 text-slate-900 min-h-screen">
@@ -644,8 +718,29 @@ export default function OfferPage() {
           </section>
         </>
       )}
+
       {/* Footer-Aktion auf der Offer-Seite */}
-      <section className="flex justify-end mt-4">
+      <section className="flex justify-between mt-4">
+        <button
+          type="button"
+          onClick={handleDownloadPdf}
+          disabled={isDownloading || isEmpty}
+          className={
+            "rounded-full border px-4 py-2 text-xs transition " +
+            (isDownloading || isEmpty
+              ? "border-slate-300 text-slate-400 bg-slate-100 cursor-not-allowed"
+              : "border-slate-600 text-slate-900 bg-white hover:bg-slate-100")
+          }
+        >
+          {isDownloading
+            ? L === "en"
+              ? "Generating PDF..."
+              : "PDF wird erzeugt..."
+            : L === "en"
+            ? "Download PDF (offer + §3)"
+            : "PDF herunterladen (Angebot + §3)"}
+        </button>
+
         <Link
           href="/confirm"
           className="rounded-full bg-slate-900 text-white px-4 py-2 text-xs hover:bg-slate-800 transition"
