@@ -23,10 +23,8 @@ import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { validateSelection } from "../lib/mandateRules";
 import type { SkillNotes } from "../components/OfferPdf"; // nur Type, kein Runtime-Import
 import { formatCurrency } from "../lib/format";
-import {
-  buildContractSection3,
-  type ContractSection3Input,
-} from "../lib/contractSection3";
+import type { ContractSection3Input } from "../lib/contractSection3";
+import { ContractSection3Block } from "../components/ContractSection3Block";
 
 const BASE_DAY_RATE = 2000;
 
@@ -170,17 +168,14 @@ export default function OfferPage() {
     !psychoId &&
     !caringId;
 
-  // 🔹 § 3 – Text aus Single Source
-  const section3Text = useMemo(() => {
-    const input: ContractSection3Input = {
-      behaviorId: behaviorId as BehaviorId | "",
-      selectedRoles: roleIds,
-      skillIds,
-      psychoId: psychoId as PsychoId | "",
-      caringId: caringId as CaringId | "",
-    };
-    return buildContractSection3(L, input);
-  }, [L, behaviorId, roleIds, skillIds, psychoId, caringId]);
+  // 🔹 Input für § 3 Single Source
+  const section3Input: ContractSection3Input = {
+    behaviorId: behaviorId as BehaviorId | "",
+    selectedRoles: roleIds,
+    skillIds,
+    psychoId: psychoId as PsychoId | "",
+    caringId: caringId as CaringId | "",
+  };
 
   const isSection3VeryEmpty =
     roleIds.length === 0 && selectedSkills.length === 0 && !psych && !caring;
@@ -640,9 +635,11 @@ export default function OfferPage() {
                   : "Sobald Sie im Briefing mindestens eine Rolle, fachliche Schwerpunkte und Interaktions-Levels gewählt haben, erscheint hier ein Formulierungsentwurf für § 3."}
               </p>
             ) : (
-              <pre className="whitespace-pre-wrap text-xs leading-relaxed text-slate-800">
-                {section3Text}
-              </pre>
+              <ContractSection3Block
+                lang={L}
+                input={section3Input}
+                className="whitespace-pre-wrap text-xs leading-relaxed text-slate-800"
+              />
             )}
           </section>
         </>

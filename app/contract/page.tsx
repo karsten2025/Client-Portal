@@ -17,10 +17,8 @@ import { useLanguage } from "../lang/LanguageContext";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { ProcessBar } from "../components/ProcessBar";
 import { validateSelection } from "../lib/mandateRules";
-import {
-  buildContractSection3,
-  type ContractSection3Input,
-} from "../lib/contractSection3";
+import type { ContractSection3Input } from "../lib/contractSection3";
+import { ContractSection3Block } from "../components/ContractSection3Block";
 
 // Rollen aus /explore
 type CardId = "sys" | "ops" | "res" | "coach";
@@ -88,17 +86,14 @@ export default function ContractPage() {
     ? `${behavior.ctx[L]} – ${behavior.pkg[L]}`
     : "";
 
-  // 🔹 Single Source of Truth: § 3 aus buildContractSection3
-  const section3Text = useMemo(() => {
-    const input: ContractSection3Input = {
-      behaviorId: behaviorId as BehaviorId | "",
-      selectedRoles: roleIds,
-      skillIds,
-      psychoId: psychoId as PsychoId | "",
-      caringId: caringId as CaringId | "",
-    };
-    return buildContractSection3(L, input);
-  }, [L, behaviorId, roleIds, skillIds, psychoId, caringId]);
+  // 🔹 Input für Single Source of Truth § 3
+  const section3Input: ContractSection3Input = {
+    behaviorId: behaviorId as BehaviorId | "",
+    selectedRoles: roleIds,
+    skillIds,
+    psychoId: psychoId as PsychoId | "",
+    caringId: caringId as CaringId | "",
+  };
 
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-6 bg-slate-50 text-slate-900 min-h-screen">
@@ -175,11 +170,13 @@ export default function ContractPage() {
             )}
           </div>
 
-          {/* 🔹 § 3 – gerendert aus buildContractSection3 */}
+          {/* 🔹 § 3 – gerendert aus Single Source via Wrapper */}
           <div className="space-y-3 leading-relaxed">
-            <pre className="whitespace-pre-wrap text-xs sm:text-sm font-normal text-slate-900">
-              {section3Text}
-            </pre>
+            <ContractSection3Block
+              lang={L}
+              input={section3Input}
+              className="whitespace-pre-wrap text-xs sm:text-sm font-normal text-slate-900"
+            />
           </div>
 
           {/* Hinweis auf Entwurfscharakter */}
