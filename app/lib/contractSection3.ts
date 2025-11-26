@@ -1,327 +1,227 @@
 // app/lib/contractSection3.ts
+
 import {
   SKILLS,
   PSYCHO_PACKAGES,
   CARING_PACKAGES,
   type Lang,
+  type BehaviorId,
   type PsychoId,
   type CaringId,
 } from "./catalog";
 
-type RoleId = "sys" | "ops" | "res" | "coach";
-
-type SkillNotes = Record<string, { need?: string; outcome?: string }>;
-
 export type ContractSection3Input = {
-  lang: Lang;
-  roles: RoleId[]; // aus localStorage "brief.selected"
-  skillIds: string[]; // aus brief.skills
-  notes?: SkillNotes; // aus brief.notes (optional)
-  psychoId: PsychoId | ""; // aus brief.psycho
-  caringId: CaringId | ""; // aus brief.caring
+  behaviorId?: BehaviorId | "";
+  selectedRoles?: string[]; // aus brief.selected: ["sys","ops","res","coach"]
+  skillIds?: string[]; // aus LOCAL_KEYS.skills
+  psychoId?: PsychoId | "";
+  caringId?: CaringId | "";
 };
 
-export type ContractSection3 = {
-  title: string;
-  paragraphs: string[]; // (1) ... (2) ... (3) ...
-};
-
-// ------------------------
-// statische Textbausteine
-// ------------------------
-
-const INTRO: Record<Lang, string> = {
-  de: [
-    "(1) Zielsetzung und Vertragscharakter",
-    "",
-    "Der Auftragnehmer (AN) berät und unterstützt den Auftraggeber (AG) als externer Spezialist. Die Leistung wird als Dienstvertrag (§ 611 BGB) erbracht.",
-    "Geschuldet ist das professionelle Tätigwerden zur Erreichung der vertraglich vereinbarten Ziele, nicht ein bestimmter wirtschaftlicher Erfolg.",
-    "Der AN unterliegt keiner disziplinarischen Weisungsbefugnis des AG.",
-  ].join(" "),
-  en: [
-    "(1) Objective and legal nature of the engagement",
-    "",
-    "The contractor (AN) advises and supports the client (AG) as an external specialist. The engagement is governed as a contract for services.",
-    "The Contractor owes professional efforts aimed at achieving the contractually agreed objectives, not a specific economic success.",
-    "The AN is not subject to the AG’s disciplinary right to issue instructions.",
-  ].join(" "),
-};
-
-const META_CLARIFICATION: Record<Lang, string> = {
-  de: [
-    "(5) Klärung von Begrifflichkeiten (Meta-Klärung)",
-    "",
-    "Die Parteien sind sich bewusst, dass projektbezogene Begriffe unterschiedlichen Interpretationen unterliegen können.",
-    "Übliche Klärungen zu Begriffen, Rollen und Verantwortlichkeiten sind im Leistungsumfang enthalten.",
-    "Ab dem Zeitpunkt, an dem sich sprachliche oder semantische Diskussionen wiederholt im Kreis drehen und messbar Aufmerksamkeit vom Projektziel abziehen, gilt die strukturierte Auflösung dieser Dissonanzen (Meta-Klärung) als gesonderte Beratungsleistung.",
-    "Diese kann nach vorheriger Absprache als Change Request (Zusatzaufwand) abgerechnet werden.",
-  ].join(" "),
-  en: [
-    "(5) Clarification of terminology (meta-clarification)",
-    "",
-    "The parties acknowledge that project-related terms may be interpreted differently.",
-    "Normal clarifications around terminology, roles and responsibilities are included in the scope of services.",
-    "From the point where linguistic or semantic discussions repeatedly go in circles and measurably distract attention from the project objective, the structured resolution of such dissonances (meta-clarification) is treated as a separate advisory service.",
-    "This may, after mutual agreement, be billed separately as a change request (additional effort).",
-  ].join(" "),
-};
-
-const EXCLUSIONS: Record<Lang, string> = {
-  de: [
-    "(6) Exklusionen (Nicht-Leistung)",
-    "",
-    "Sofern nicht ausdrücklich abweichend vereinbart, sind insbesondere nicht geschuldet:",
-    "– Rechts- und Steuerberatung,",
-    "– disziplinarische Personalverantwortung (Einstellungen, Abmahnungen, Gehaltsgespräche),",
-    "– Übernahme von Organverantwortung (z. B. Geschäftsführung, Prokura),",
-    "– Herbeiführung eines Erfolgs, der von der Mitwirkung Dritter abhängt, auf die der AN keinen direkten Zugriff hat.",
-  ].join(" "),
-  en: [
-    "(6) Exclusions (non-services)",
-    "",
-    "Unless expressly agreed otherwise, the following in particular are not owed:",
-    "– legal and tax advice,",
-    "– disciplinary HR responsibility (hiring, warnings, salary negotiations),",
-    "– assumption of corporate officer responsibility (e.g. managing director, power of attorney),",
-    "– achievement of results that depend on third parties over whom the AN has no direct control.",
-  ].join(" "),
-};
-
-// ------------------------
-// Rollen-Bausteine (2)
-// ------------------------
-
-const ROLE_TEXT: Record<Lang, Record<RoleId, string>> = {
-  de: {
-    sys: [
-      "Interim Management & Portfolio-Steuerung:",
-      "Der AN übernimmt die operative Steuerung von Projekten, Programmen oder Portfolios (Interim).",
-      "Er schließt temporäre Vakanzen, steuert die Umsetzung auf Basis vereinbarter Meilensteine, sorgt für Transparenz im Reporting",
-      "und koordiniert die fachliche Zulieferung der Teams ohne unnötige Reibungsverluste.",
-    ].join(" "),
-    ops: [
-      "Betriebssystem-Performance & Skalierung:",
-      "Der AN analysiert und optimiert die Prozess- und Systemlandschaft des AG.",
-      "Bestehende Abläufe werden in ein skalierbares „Betriebssystem“ überführt, Engpässe in der Wertschöpfungskette identifiziert",
-      "und effiziente Governance-Mechanismen etabliert, die die Teams entlasten und messbare Effizienzgewinne ermöglichen.",
-    ].join(" "),
-    res: [
-      "Strategische Resonanz & Stakeholder-Management:",
-      "Der AN steuert komplexe Stakeholder-Umfelder und politische Kommunikation.",
-      "Er fungiert als Übersetzer zwischen Fachebene und Management, löst kommunikative Blockaden",
-      "und richtet unterschiedliche Interessenlagen strategisch auf das vereinbarte Projektziel aus.",
-    ].join(" "),
-    coach: [
-      "Sparring, Coaching & Enablement:",
-      "Der AN agiert als strukturierter Sparrings- und Coaching-Partner („Thinking Partner“) für Führungskräfte und Teams.",
-      "Er unterstützt bei Entscheidungsfindung, befähigt Schlüsselpersonen methodisch",
-      "und fördert eigenständige Lösungsfindung in komplexen Lagen.",
-    ].join(" "),
-  },
-  en: {
-    sys: [
-      "Interim management & portfolio steering:",
-      "The AN assumes operational steering of projects, programmes or portfolios on an interim basis.",
-      "They bridge temporary vacancies, steer delivery based on agreed milestones, ensure transparent reporting",
-      "and coordinate contributions from the involved teams with minimum friction.",
-    ].join(" "),
-    ops: [
-      "Operating system performance & scaling:",
-      "The AN analyses and optimises the client’s process and system landscape.",
-      "Existing workflows are transformed into a scalable “operating system”, bottlenecks in the value chain are identified",
-      "and efficient governance mechanisms are established to relieve teams and create measurable efficiency gains.",
-    ].join(" "),
-    res: [
-      "Strategic resonance & stakeholder management:",
-      "The AN steers complex stakeholder environments and political communication.",
-      "They act as a translator between specialist teams and management, resolve communication blockages",
-      "and align diverse interests towards the agreed project objective.",
-    ].join(" "),
-    coach: [
-      "Sparring, coaching & enablement:",
-      "The AN acts as a structured sparring and coaching partner (“thinking partner”) for leaders and teams.",
-      "They support decision-making, methodically empower key people",
-      "and foster autonomous problem-solving in complex situations.",
-    ].join(" "),
-  },
-};
-
-// ------------------------
-// Helper-Funktionen
-// ------------------------
-
-function buildRolesParagraph(lang: Lang, roles: RoleId[]): string {
-  if (!roles.length) {
-    return lang === "de"
-      ? "(2) Leistungsgegenstand (Rolle)\n\nDie konkrete Rolle wird im Angebotsdokument und in der Leistungsbeschreibung definiert."
-      : "(2) Scope of services (role)\n\nThe concrete role is defined in the offer document and the detailed scope description.";
-  }
-
-  const unique = [...new Set(roles)];
-  const header =
-    lang === "de"
-      ? "(2) Leistungsgegenstand (Rolle)\n\nBasierend auf der Auswahl im Briefing erbringt der AN folgende Kernleistungen:"
-      : "(2) Scope of services (role)\n\nBased on the selection made in the briefing, the AN provides the following core services:";
-
-  const items = unique.map((r) => `• ${ROLE_TEXT[lang][r]}`).join("\n");
-
-  return `${header}\n\n${items}`;
-}
-
-function buildSkillsParagraph(
-  lang: Lang,
-  skillIds: string[],
-  notes?: SkillNotes
-): string {
-  if (!skillIds.length) {
-    return lang === "de"
-      ? "(3) Fachliche Schwerpunkte (Skills)\n\nDie Leistungserbringung erfolgt auf Basis der im Angebot beschriebenen Qualifikationen des AN."
-      : "(3) Professional focus (skills)\n\nServices are rendered based on the qualifications of the AN as described in the offer.";
-  }
-
-  const picked = SKILLS.filter((s) => skillIds.includes(s.id));
-
-  const header =
-    lang === "de"
-      ? "(3) Fachliche Schwerpunkte (Skills)\n\nDie Leistungserbringung erfolgt unter Einsatz folgender fachlicher Schwerpunkte, wie im Briefing ausgewählt:"
-      : "(3) Professional focus (skills)\n\nServices are rendered using the following professional focus areas as selected in the briefing:";
-
-  const lines = picked.map((s) => {
-    const n = notes?.[s.id];
-    const base = `• ${s.title[lang]}`;
-    if (n?.need || n?.outcome) {
-      const extra = [
-        n.need && (lang === "de" ? `Bedarf: ${n.need}` : `Need: ${n.need}`),
-        n.outcome &&
-          (lang === "de"
-            ? `Ziel/Nutzen: ${n.outcome}`
-            : `Outcome/benefit: ${n.outcome}`),
-      ]
-        .filter(Boolean)
-        .join(" | ");
-      return `${base} (${extra})`;
-    }
-    return base;
-  });
-
-  return `${header}\n\n${lines.join("\n")}`;
-}
-
-function buildPsychParagraph(lang: Lang, psychoId: PsychoId | ""): string {
-  const pkg = PSYCHO_PACKAGES.find((p) => p.id === psychoId) ?? null;
-
-  if (!pkg) {
-    return lang === "de"
-      ? "(4a) Psychosoziale Intervention (System-Tiefe)\n\nDie Tiefe der psychosozialen Intervention wird im Angebot beschrieben. Ohne abweichende Vereinbarung liegt der Schwerpunkt auf Struktur, Transparenz und Governance (Basis-Level)."
-      : "(4a) Psychosocial intervention (system depth)\n\nThe depth of psychosocial intervention is described in the offer. Unless agreed otherwise, the focus is on structure, transparency and governance (base level).";
-  }
-
-  const levelLabel = (pkg as any).level?.[lang] ?? pkg.name[lang];
-  const include = (pkg as any).include?.[lang] ?? "";
-  const exclude = (pkg as any).exclude?.[lang] ?? "";
-  const benefit = pkg.benefit[lang];
-
-  if (lang === "de") {
-    return [
-      "(4a) Psychosoziale Intervention (System-Tiefe)",
-      "",
-      `Bei Auswahl ${levelLabel} gilt: ${pkg.focus.de}`,
-      include && `Inklusion (Doing): ${include}`,
-      exclude && `Exklusion (Not Doing): ${exclude}`,
-      `Ihr Nutzen: ${benefit}`,
-    ]
-      .filter(Boolean)
-      .join(" ");
-  }
-
-  return [
-    "(4a) Psychosocial intervention (system depth)",
-    "",
-    `Where ${levelLabel} is selected, the following applies: ${pkg.focus.en}`,
-    include && `Includes: ${include}`,
-    exclude && `Excludes: ${exclude}`,
-    `Benefit: ${benefit}`,
-  ]
-    .filter(Boolean)
-    .join(" ");
-}
-
-function buildCaringParagraph(lang: Lang, caringId: CaringId | ""): string {
-  const pkg = CARING_PACKAGES.find((c) => c.id === caringId) ?? null;
-
-  if (!pkg) {
-    return lang === "de"
-      ? "(4b) Grad der emotionalen Investition (Caring)\n\nDas Caring-Level orientiert sich am marktüblichen professionellen Standard. Eine darüber hinausgehende emotionale Bindung ist nicht geschuldet."
-      : "(4b) Degree of emotional investment (caring)\n\nThe caring level follows a market-standard professional baseline. Any emotional involvement beyond that is not owed.";
-  }
-
-  const name = pkg.name[lang];
-  const tagline = (pkg as any).tagline?.[lang] ?? "";
-  const definition = (pkg as any).definition?.[lang] ?? "";
-  const offer = (pkg as any).offer?.[lang] ?? "";
-  const inclusion = (pkg as any).inclusion?.[lang] ?? "";
-  const exclusion = (pkg as any).exclusion?.[lang] ?? "";
-  const benefit = pkg.benefit[lang];
-
-  if (lang === "de") {
-    return [
-      "(4b) Grad der emotionalen Investition (Caring)",
-      "",
-      `${name}${tagline ? ` – ${tagline}` : ""}`,
-      definition,
-      offer && `Angebot: ${offer}`,
-      inclusion && `Inklusion (Doing): ${inclusion}`,
-      exclusion && `Exklusion (Not Doing): ${exclusion}`,
-      `Ihr Nutzen: ${benefit}`,
-    ]
-      .filter(Boolean)
-      .join(" ");
-  }
-
-  return [
-    "(4b) Degree of emotional investment (caring)",
-    "",
-    `${name}${tagline ? ` – ${tagline}` : ""}`,
-    definition,
-    offer && `Offer: ${offer}`,
-    inclusion && `Includes: ${inclusion}`,
-    exclusion && `Excludes: ${exclusion}`,
-    `Benefit: ${benefit}`,
-  ]
-    .filter(Boolean)
-    .join(" ");
-}
-
-// ------------------------
-// Haupt-Builder
-// ------------------------
-
+/**
+ * Baut § 3 Leistungsumfang & Vorgehensweise als Plain-Text
+ * – DE: Civil Law
+ * – EN: Common Law flavour
+ */
 export function buildContractSection3(
+  lang: Lang,
   input: ContractSection3Input
-): ContractSection3 {
-  const { lang, roles, skillIds, notes, psychoId, caringId } = input;
+): string {
+  const L = lang === "en" ? "en" : "de";
 
-  const intro = INTRO[lang];
-  const rolesPara = buildRolesParagraph(lang, roles);
-  const skillsPara = buildSkillsParagraph(lang, skillIds, notes);
-  const psychPara = buildPsychParagraph(lang, psychoId);
-  const caringPara = buildCaringParagraph(lang, caringId);
-  const meta = META_CLARIFICATION[lang];
-  const excl = EXCLUSIONS[lang];
+  const selectedRoles = input.selectedRoles ?? [];
+  const skillIds = input.skillIds ?? [];
+  const psychoId = input.psychoId ?? "";
+  const caringId = input.caringId ?? "";
 
-  return {
-    title:
-      lang === "de"
-        ? "§ 3 Leistungsumfang & Vorgehensweise"
-        : "Section 3 – Scope of services & approach",
-    paragraphs: [
-      intro,
-      rolesPara,
-      skillsPara,
-      psychPara,
-      caringPara,
-      meta,
-      excl,
-    ],
-  };
+  // -----------------------------
+  // 1) Absatz (1) – haben wir schon mal definiert, hier leicht generalisiert
+  // -----------------------------
+  const part1 =
+    L === "de"
+      ? [
+          "§ 3 Leistungsumfang & Vorgehensweise",
+          "",
+          '(1) Der Auftragnehmer ("AN") berät und unterstützt den Auftraggeber ("AG") als externer Spezialist. Die Leistung wird als Dienstvertrag erbracht. Geschuldet ist das professionelle Tätigwerden zur Erreichung der vereinbarten Ziele, nicht ein bestimmter wirtschaftlicher Erfolg. Der AN unterliegt keiner disziplinarischen Weisungsbefugnis des AG.',
+        ].join("\n")
+      : [
+          "§ 3 Scope of Services & Delivery Approach",
+          "",
+          '(1) The contractor (the "Contractor") advises and supports the client (the "Client") as an external specialist. The Services are provided on a services basis. The Contractor owes professional efforts aimed at achieving the agreed objectives, but does not guarantee any specific commercial result. The Contractor is not subject to the Client’s disciplinary instructions.',
+        ].join("\n");
+
+  // -----------------------------
+  // 2) Rollen / Rollenset – allgemeiner Absatz + dynamische Module
+  // -----------------------------
+
+  const part2General =
+    L === "de"
+      ? [
+          "",
+          "(2) Leistungsgegenstand (Rolle und Rollenset)",
+          '(a) Der Auftragnehmer ("AN") erbringt seine Leistungen in einer oder mehreren Rollen (zusammen das „Rollenset“), die im Projekt-Briefing und im Angebotsentwurf beschrieben sind. Hierzu können insbesondere gehören:',
+          "– fachliche Rolle (z. B. Interim Management, Projekt-/Programm-/Portfolio-Steuerung, Coaching/Sparring),",
+          "– verhaltensbezogener Kontext (z. B. klassisches Umfeld, Wachstums-/Chaosphase, hoch-politisches Umfeld, Turnaround),",
+          "– psychosoziale Interventions-Tiefe (z. B. Struktur-/Transparenz-Fokus, Resilienz-Fokus, Sensemaking/Systemarbeit),",
+          "– Caring-Level / Grad der emotionalen Investition (z. B. professionelle Distanz, aktives Stakeholder-Engagement, unternehmerische Dedikation),",
+          "– sowie weitere, im Einzelfall vereinbarte Dimensionen.",
+          "",
+          "(b) Art und Umfang der jeweils geschuldeten Leistungen ergeben sich aus dem Projekt-Briefing des AG und dem zugehörigen Angebotsentwurf des AN (gemeinsam „Leistungsbeschreibung“). Nur die dort konkret beschriebenen Aufgaben, Verantwortungsbereiche und Interventions-Ebenen gelten als vertraglich geschuldet; darüber hinausgehende Erwartungen oder Rollenbilder sind nur dann Vertragsbestandteil, wenn sie ausdrücklich schriftlich (z. B. per ergänztem Angebot oder Change Request) vereinbart werden.",
+          "",
+          "(c) Der AN schuldet ein fachgerechtes Tätigwerden innerhalb des vereinbarten Rollensets und der beschriebenen Dimensionen. Eine Erweiterung oder substanzielle Veränderung des Rollensets (z. B. zusätzliche Linienverantwortung, tiefere psychosoziale Interventionen, erweiterte Governance-Aufgaben) bedarf einer gesonderten Vereinbarung und kann als Change Request mit zusätzlicher Vergütung ausgestaltet werden.",
+        ].join("\n")
+      : [
+          "",
+          "(2) Scope of Services (Role and Role Set)",
+          "(a) The Contractor performs the Services in one or more roles (together, the “Role Set”) as described in the Project Briefing and the Offer Draft (together, the “Service Description”). The Role Set may include, in particular:",
+          "– a professional role (e.g. interim management, project / programme / portfolio lead, coaching / sparring),",
+          "– a behavioural / context dimension (e.g. classical environment, growth / chaos phase, highly political environment, turnaround),",
+          "– a psychosocial intervention depth (e.g. focus on structure and transparency, resilience focus, sensemaking / systemic work),",
+          "– a caring level / degree of emotional investment (e.g. professional distance, active stakeholder engagement, entrepreneurial dedication),",
+          "– and any further dimensions expressly agreed between the parties.",
+          "",
+          "(b) The Contractor’s obligations are limited to the tasks, responsibilities and intervention levels expressly set out in the Service Description. Any additional expectations, implicit assumptions or role images shall only form part of the contractual obligations if they have been expressly agreed in writing (for example by an amended offer or a Change Request).",
+          "",
+          "(c) The Contractor shall exercise due professional care within the agreed Role Set and dimensions. Any extension or material change of the Role Set (for example assuming additional line management responsibility, deeper psychosocial intervention or extended governance duties) requires a separate agreement and may be documented and charged as a Change Request.",
+        ].join("\n");
+
+  const roleModulesDe: string[] = [];
+  const roleModulesEn: string[] = [];
+
+  if (selectedRoles.includes("sys")) {
+    roleModulesDe.push(
+      "(2.x.i) Rollenmodul „Interim Management & Portfolio-Steuerung“ (sys / Bube)\n" +
+        "Übernahme der operativen Steuerung von Projekten, Programmen oder Portfolios auf Zeit. Der AN schließt temporäre Vakanzen in Leitungs- oder Steuerungsfunktionen, steuert die Umsetzung auf Basis vereinbarter Meilensteine, stellt ein transparentes Reporting sicher und koordiniert die fachliche Zulieferung der beteiligten Teams. Disziplinarische Personalverantwortung wird nur übernommen, wenn dies ausdrücklich und schriftlich vereinbart wurde."
+    );
+    roleModulesEn.push(
+      "(2.x.i) Role module “Interim Management & Portfolio Steering” (sys / Jack)\n" +
+        "Temporary assumption of operational steering of projects, programmes or portfolios. The Contractor bridges vacancies in leadership or steering functions, manages delivery against agreed milestones, ensures transparent reporting and coordinates the contribution of the relevant teams. Disciplinary HR responsibility is only assumed if expressly agreed in writing."
+    );
+  }
+
+  if (selectedRoles.includes("ops")) {
+    roleModulesDe.push(
+      "(2.x.ii) Rollenmodul „Betriebssystem-Performance & Skalierung“ (ops / Dame)\n" +
+        "Analyse und Optimierung der bestehenden Prozess- und Systemlandschaft des AG. Der AN identifiziert Engpässe in den Wertschöpfungsketten, entwickelt Vorschläge zur Gestaltung eines skalierbaren „Betriebssystems“ und unterstützt den AG bei der Priorisierung und Umsetzung vereinbarter Verbesserungsmaßnahmen. Die Verantwortung für die endgültige Entscheidung über Struktur- und Systemänderungen verbleibt beim AG."
+    );
+    roleModulesEn.push(
+      "(2.x.ii) Role module “Operating System Performance & Scaling” (ops / Queen)\n" +
+        "Analysis and optimisation of the Client’s existing process and system landscape. The Contractor identifies bottlenecks in value chains, develops proposals for a scalable “operating system” and supports the Client in prioritising and implementing agreed improvement measures. Final decisions on structural or system changes remain with the Client."
+    );
+  }
+
+  if (selectedRoles.includes("res")) {
+    roleModulesDe.push(
+      "(2.x.iii) Rollenmodul „Strategische Resonanz & Stakeholder-Management“ (res / König)\n" +
+        "Unterstützung des AG bei der Steuerung komplexer Stakeholder-Umfelder. Der AN analysiert Erwartungsbilder relevanter Anspruchsgruppen, bereitet Kommunikations- und Entscheidungsgrundlagen auf, moderiert bei Bedarf Konflikt- und Klärungsgespräche und unterstützt den AG dabei, Interessenlagen auf das vereinbarte Projektziel auszurichten. Der AN trifft keine eigenen rechtsverbindlichen Erklärungen für den AG, sofern dies nicht ausdrücklich schriftlich vereinbart wurde."
+    );
+    roleModulesEn.push(
+      "(2.x.iii) Role module “Strategic Resonance & Stakeholder Management” (res / King)\n" +
+        "Support in managing complex stakeholder environments. The Contractor analyses the expectations of relevant stakeholders, prepares communication and decision-making materials, moderates conflict or clarification meetings where appropriate and helps the Client align different interests with the agreed project objectives. The Contractor does not make legally binding declarations on behalf of the Client unless expressly agreed in writing."
+    );
+  }
+
+  if (selectedRoles.includes("coach")) {
+    roleModulesDe.push(
+      "(2.x.iv) Rollenmodul „Sparring, Coaching & Enablement“ (coach / Ass)\n" +
+        "Methodisches Coaching und Sparring für Führungskräfte und Teams des AG. Der AN agiert als „Thinking Partner“ zur Reflexion von Situationen und Entscheidungen, vermittelt Methoden-Know-how und fördert die eigenständige Lösungsfindung der Beteiligten. Coaching-Leistungen ersetzen keine Therapie und begründen keine arbeits- oder personalrechtlichen Entscheidungen; diese verbleiben in der Verantwortung des AG."
+    );
+    roleModulesEn.push(
+      "(2.x.iv) Role module “Sparring, Coaching & Enablement” (coach / Ace)\n" +
+        "Method-based coaching and sparring for the Client’s leaders and teams. The Contractor acts as a thinking partner to reflect on situations and decisions, transfers methodological know-how and encourages independent problem-solving by the participants. Coaching services do not constitute therapy and do not replace the Client’s responsibility for HR or employment decisions."
+    );
+  }
+
+  let part2Modules = "";
+  if (selectedRoles.length > 0) {
+    const introDe =
+      "Je nach im Projekt-Briefing gewählter Rolle gelten ergänzend die folgenden Leistungsbilder:";
+    const introEn =
+      "Depending on the roles selected in the Project Briefing, the following role modules apply in addition:";
+    part2Modules =
+      "\n\n" +
+      (L === "de" ? introDe : introEn) +
+      "\n\n" +
+      (L === "de" ? roleModulesDe.join("\n\n") : roleModulesEn.join("\n\n"));
+  }
+
+  // -----------------------------
+  // 3) Fachliche Schwerpunkte / Skills
+  // -----------------------------
+  const selectedSkillTitles =
+    skillIds.length > 0
+      ? SKILLS.filter((s) => skillIds.includes(s.id)).map((s) => s.title[L])
+      : [];
+
+  const skillsListBlock =
+    selectedSkillTitles.length > 0
+      ? "\n\n" +
+        (L === "de"
+          ? "Aus dem Projekt-Briefing ergeben sich derzeit insbesondere folgende fachliche Schwerpunkte:"
+          : "Based on the Project Briefing, the following professional focus areas currently apply in particular:") +
+        "\n\n" +
+        selectedSkillTitles.map((t) => `– ${t}`).join("\n")
+      : "";
+
+  const part3 =
+    L === "de"
+      ? [
+          "",
+          "(3) Fachliche Schwerpunkte (Skills)",
+          "(a) Die Leistungserbringung erfolgt unter Einsatz der im Projekt-Briefing ausgewählten fachlichen Schwerpunkte („Skills“). Die Skills beschreiben, in welchen Kompetenzfeldern der AN tätig wird (z. B. Projektmanagement klassisch/agil/hybrid, Organisations- und Prozessdesign, PMO-Ausrichtung, kognitive / KI-Projekte, Engineering-Tätigkeiten).",
+          "",
+          "(b) Die im Briefing dokumentierte Auswahl der Skills einschließlich etwaiger Kurzbeschreibungen versteht sich als inhaltliche Eingrenzung des Leistungsbildes. Sie dient der Konkretisierung des „Wie“ der Leistungserbringung und begründet keine Erfolgsgarantie für bestimmte wirtschaftliche oder organisatorische Ergebnisse.",
+          "",
+          "(c) Soweit im Briefing oder in Anlagen zum Angebot eine Aufzählung von Beispielen, Use Cases oder typischen Anwendungsfällen erfolgt, dient diese ausschließlich der Veranschaulichung. Hieraus folgt keine Verpflichtung des AN, sämtliche aufgeführten Beispiele vollumfänglich und gleichzeitig umzusetzen. Verbindlich sind nur diejenigen Maßnahmen, die in Leistungsbeschreibung, Angebotsentwurf oder bestätigten Change Requests ausdrücklich als zu erbringende Leistung bezeichnet sind.",
+          "",
+          "(d) Erweitert der AG das fachliche Spektrum später wesentlich (z. B. zusätzliche Business-Units, weitere Länder-Roll-outs, zusätzliche Produktlinien oder zusätzliche KI-Use-Cases), kann der AN eine Anpassung des Honorars und der Kapazitäten verlangen. Diese Erweiterungen werden in der Regel als Change Request mit separater Budgetierung vereinbart.",
+        ].join("\n") + skillsListBlock
+      : [
+          "",
+          "(3) Professional focus areas (Skills)",
+          "(a) The Services are delivered using the professional focus areas (“Skills”) selected in the Project Briefing. The Skills describe the competence domains in which the Contractor will act (for example classical / agile / hybrid project management, organisational and process design, PMO alignment, cognitive / AI projects, engineering services).",
+          "",
+          "(b) The selection of Skills as documented in the Briefing, including any short descriptions, serves to narrow down and concretise the Service Description. It describes how the Services are rendered but does not constitute a guarantee of any specific commercial or organisational result.",
+          "",
+          "(c) Any examples, use cases or typical applications listed in the Briefing or in annexes to the Offer are provided for illustration only. They do not oblige the Contractor to implement all such examples in full and at the same time. Only those measures that are expressly designated as Services in the Service Description, the Offer or approved Change Requests shall be contractually binding.",
+          "",
+          "(d) If the Client substantially widens the professional scope at a later stage (for example by adding further business units, countries, product lines or AI use cases), the Contractor may request an adjustment of fees and capacity. Such extensions will typically be agreed as a Change Request with a separate budget.",
+        ].join("\n") + skillsListBlock;
+
+  // -----------------------------
+  // 4) Optional: kurzer Hinweis zum aktuellen 5a/5b-Stand (psycho / caring)
+  // (nur ein Satz, weil die inhaltliche Beschreibung schon in Brief/Offer steckt)
+  // -----------------------------
+
+  const psychoPackage = psychoId
+    ? PSYCHO_PACKAGES.find((p) => p.id === psychoId)
+    : undefined;
+  const caringPackage = caringId
+    ? CARING_PACKAGES.find((c) => c.id === caringId)
+    : undefined;
+
+  let part4 = "";
+  if (psychoPackage || caringPackage) {
+    const psychoLabel =
+      psychoPackage?.name[L] ??
+      (L === "de" ? "kein Paket gewählt" : "no package selected");
+    const caringLabel =
+      caringPackage?.name[L] ??
+      (L === "de" ? "kein Paket gewählt" : "no package selected");
+
+    part4 =
+      "\n\n" +
+      (L === "de"
+        ? `(4) Interaktions-Level (Kurzüberblick)\nFür das vorliegende Mandat sind aktuell folgende Interventions-Parameter gewählt: psychosoziale Tiefe: ${psychoLabel}; Caring-Level: ${caringLabel}. Die in Briefing und Angebotsentwurf beschriebenen Grenzen (Inklusion/Exklusion) gelten als Vertragsbestandteil.`
+        : `(4) Interaction levels (short overview)\nFor the present mandate, the following intervention parameters are currently selected: psychosocial depth: ${psychoLabel}; caring level: ${caringLabel}. The boundaries (inclusion / exclusion) described in the Briefing and Offer Draft form part of this Agreement.`);
+  }
+
+  // -----------------------------
+  // Zusammenbauen
+  // -----------------------------
+  const parts = [part1, part2General, part2Modules, part3, part4].filter(
+    (p) => p && p.trim().length > 0
+  );
+
+  return parts.join("\n\n");
 }
