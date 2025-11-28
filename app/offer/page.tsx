@@ -23,13 +23,20 @@ import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { validateSelection } from "../lib/mandateRules";
 import type { SkillNotes } from "../components/OfferPdf"; // nur Type, kein Runtime-Import
 import { formatCurrency } from "../lib/format";
-import type { ContractSection3Input } from "../lib/contractSection3";
-import { ContractSection3Block } from "../components/ContractSection3Block";
+
+// 🔹 Single Source: §3 + Requirements
+import {
+  buildContractSection3,
+  type ContractSection3Input,
+} from "../lib/contractSection3";
+import {
+  getRoleRequirementsFor,
+  getRoleModuleLabel,
+  REQUIREMENT_GROUP_ORDER,
+  type RoleId,
+} from "../lib/roleRequirements";
 
 const BASE_DAY_RATE = 2000;
-
-// IDs wie in /explore
-type RoleId = "sys" | "ops" | "res" | "coach";
 
 export default function OfferPage() {
   const { lang } = useLanguage();
@@ -43,7 +50,6 @@ export default function OfferPage() {
   const [notes, setNotes] = useState<SkillNotes>({});
   const [days, setDays] = useState<number>(5);
   const [roleIds, setRoleIds] = useState<RoleId[]>([]);
-  const [isDownloading, setIsDownloading] = useState(false); // NEW: Download-Status
 
   // Mandatslogik-Validierung
   const validation = validateSelection(
@@ -169,7 +175,7 @@ export default function OfferPage() {
     !psychoId &&
     !caringId;
 
-  // 🔹 Input für § 3 Single Source
+  // 🔹 Single Source für §3 auch in der Offer-Vorschau
   const section3Input: ContractSection3Input = {
     behaviorId: behaviorId as BehaviorId | "",
     selectedRoles: roleIds,
@@ -178,79 +184,68 @@ export default function OfferPage() {
     caringId: caringId as CaringId | "",
   };
 
-  const isSection3VeryEmpty =
-    roleIds.length === 0 && selectedSkills.length === 0 && !psych && !caring;
+  const section3Text = buildContractSection3(L, section3Input);
 
-  // 🔹 NEU: Handler für PDF-Download
+  const section3Paragraphs = section3Text
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+
+  // 🔹 Alle Rollen, die für die detaillierte Beschreibung relevant sind
+  const ALL_ROLE_IDS: RoleId[] = ["sys", "ops", "res", "coach"];
+  const roleIdsForRequirements: RoleId[] = roleIds.filter((r): r is RoleId =>
+    ALL_ROLE_IDS.includes(r)
+  );
+  const detailGroups = REQUIREMENT_GROUP_ORDER;
+
   const handleDownloadPdf = async () => {
     try {
-      setIsDownloading(true);
-
-      // Sicherheitscheck: wenn gar nichts da ist, lohnt PDF nicht
-      if (isEmpty) {
-        alert(
-          L === "en"
-            ? "No briefing/offer data available yet. Please complete the steps first."
-            : "Es liegen noch keine Briefing-/Angebotsdaten vor. Bitte füllen Sie zuerst die Schritte aus."
-        );
-        return;
-      }
+      // Alles, was das PDF braucht – wir haben diese Werte ja bereits
+      const payload = {
+        lang: L,
+        brief,
+        behaviorSummary,
+        selectedSkills: selectedSkills.map((s) => ({
+          id: s.id,
+          title: s.title,
+        })),
+        psychLabel: psychSummary,
+        caringLabel: caringSummary,
+        notes,
+        days,
+        dayRate,
+        net,
+        tax,
+        gross,
+        currency,
+        // wichtig: der gleiche Input, den auch die Vertragsvorschau nutzt
+        section3Input,
+      };
 
       const res = await fetch("/api/offer-pdf", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          lang: L,
-          brief,
-          behaviorSummary,
-          selectedSkills: selectedSkills.map((s) => ({
-            id: s.id,
-            title: s.title,
-          })),
-          psychLabel: psychSummary,
-          caringLabel: caringSummary,
-          notes,
-          days,
-          dayRate,
-          net,
-          tax,
-          gross,
-          currency,
-          section3Input,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
-        console.error("PDF-API-Fehler", res.status, await res.text());
-        alert(
-          L === "en"
-            ? "Error while generating the PDF. Please try again."
-            : "Fehler beim Erzeugen der PDF. Bitte versuchen Sie es erneut."
-        );
+        console.error("PDF-Download fehlgeschlagen", await res.text());
         return;
       }
 
       const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
+
       const a = document.createElement("a");
       a.href = url;
-      a.download =
-        L === "en" ? "offer-contract-draft.pdf" : "angebot-vertrag-entwurf.pdf";
+      a.download = (brief.projekt || "angebot") + "_angebot_und_vertrag.pdf";
       document.body.appendChild(a);
       a.click();
       a.remove();
-      window.URL.revokeObjectURL(url);
+
+      URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("PDF-Download-Fehler", err);
-      alert(
-        L === "en"
-          ? "Unexpected error while generating the PDF."
-          : "Unerwarteter Fehler beim Erzeugen der PDF."
-      );
-    } finally {
-      setIsDownloading(false);
+      console.error("Fehler beim PDF-Download", err);
     }
   };
 
@@ -548,7 +543,7 @@ export default function OfferPage() {
                   <div className="text-slate-600">
                     {label(
                       "Hinweis: (Keine Auswahl getroffen.)",
-                      "Note: (No skills selected.)"
+                      "Note: (No selection made.)"
                     )}
                   </div>
                 ) : (
@@ -661,86 +656,151 @@ export default function OfferPage() {
                 </div>
               </div>
 
-              {/* Zahlungsbedingungen */}
+              {/* Hinweis Angebotscharakter */}
               <h4 className="font-semibold mt-3 mb-1">
                 {label(
-                  "7. Zahlungsbedingungen & nächster Schritt",
-                  "7. Payment terms & next step"
+                  "7. Hinweis zum Angebotscharakter",
+                  "7. Note on offer character"
                 )}
               </h4>
-              <div className="border border-slate-300 rounded p-2 bg-white space-y-1">
-                <div>
-                  •{" "}
+              <div className="border border-slate-300 rounded p-2 bg-white mb-4">
+                <p className="text-slate-700">
                   {label(
-                    "Rechnungsstellung leistungnah nach Projektfortschritt oder Meilensteinen.",
-                    "Invoicing close to performance, based on project progress or milestones."
+                    "Dieses Dokument ist ein unverbindlicher Angebotsentwurf. Verbindlich sind ausschließlich die in der final abgestimmten und freigegebenen Fassung (Angebot, Leistungsbeschreibung, Vertrag) dokumentierten Inhalte.",
+                    "This document is a non-binding offer draft. Only the contents documented in the final agreed and approved version (offer, statement of work, contract) are binding."
                   )}
-                </div>
-                <div>
-                  •{" "}
-                  {label(
-                    "Zahlungsziel: 14 Tage netto ohne Abzug.",
-                    "Payment term: 14 days net without deduction."
-                  )}
-                </div>
-                <div>
-                  •{" "}
-                  {label(
-                    "Bitte prüfen Sie den Angebotsentwurf und geben Sie mir bei Interesse ein kurzes Go für die Finalisierung.",
-                    "Please review this offer draft and let me know if you would like me to finalise it."
-                  )}
-                </div>
+                </p>
+              </div>
+
+              {/* 🔹 NEU: Vertragsvorschau § 3 (Single Source + alle Rollen) */}
+              <h4 className="font-semibold mt-3 mb-1">
+                {label(
+                  "8. Vertragsvorschau – § 3 Leistungsumfang & Vorgehensweise",
+                  "8. Contract preview – § 3 Scope of services & delivery approach"
+                )}
+              </h4>
+
+              <div className="border border-slate-300 rounded p-3 bg-white space-y-2">
+                {section3Paragraphs.length === 0 ? (
+                  <p className="text-slate-600">
+                    {label(
+                      "Für eine Vorschau von § 3 bitte zunächst Rollen, Skills und Interaktions-Levels im Briefing ausfüllen.",
+                      "To see a preview of § 3, please complete roles, skills and interaction levels in the briefing first."
+                    )}
+                  </p>
+                ) : (
+                  <>
+                    {/* §3-Text aus contractSection3.ts */}
+                    <div className="space-y-2 leading-relaxed">
+                      {section3Paragraphs.map((p, idx) => (
+                        <p key={idx}>{p}</p>
+                      ))}
+                    </div>
+
+                    {/* Detaillierte Leistungsbeschreibung für alle gewählten Rollen */}
+                    {roleIdsForRequirements.length > 0 && (
+                      <div className="mt-4 space-y-4">
+                        {roleIdsForRequirements.map((roleId) => {
+                          const moduleLabel = getRoleModuleLabel(L, roleId);
+                          const requirements = getRoleRequirementsFor(
+                            L,
+                            roleId
+                          );
+                          if (!requirements.length) return null;
+
+                          return (
+                            <div key={roleId} className="space-y-2">
+                              <p className="font-semibold text-slate-900">
+                                {L === "en"
+                                  ? `Detailed scope of work – role module “${moduleLabel}”`
+                                  : `Detaillierte Leistungsbeschreibung – Rollenmodul „${moduleLabel}“`}
+                              </p>
+
+                              {detailGroups.map((group) => {
+                                const items = requirements.filter(
+                                  (r) => r.group === group
+                                );
+                                if (!items.length) return null;
+
+                                const heading =
+                                  group === "ziel"
+                                    ? label(
+                                        "A. Ziel & Mandatsrahmen",
+                                        "A. Purpose and mandate"
+                                      )
+                                    : group === "leistung"
+                                    ? label(
+                                        "B. Leistungen des Auftragnehmers (AN)",
+                                        "B. Services of the Contractor"
+                                      )
+                                    : group === "mitwirkung"
+                                    ? label(
+                                        "C. Mitwirkungspflichten des Auftraggebers (AG)",
+                                        "C. Client responsibilities"
+                                      )
+                                    : group === "ergebnis"
+                                    ? label(
+                                        "D. Ergebnisse / Deliverables",
+                                        "D. Results / deliverables"
+                                      )
+                                    : group === "zeit"
+                                    ? label(
+                                        "E. Zeit & Umfang / Vergütung",
+                                        "E. Time & fees"
+                                      )
+                                    : group === "kommunikation"
+                                    ? label(
+                                        "F. Kommunikation & Eskalation",
+                                        "F. Communication & escalation"
+                                      )
+                                    : label(
+                                        "G. Abgrenzung / Nicht-Leistungen",
+                                        "G. Exclusions / non-services"
+                                      );
+
+                                return (
+                                  <div key={group} className="mt-2">
+                                    <p className="font-semibold">{heading}</p>
+                                    <ul className="mt-1 space-y-1 list-disc pl-6">
+                                      {items.map((item) => (
+                                        <li
+                                          key={item.id}
+                                          className="whitespace-pre-wrap"
+                                        >
+                                          [{item.id}] {item.text}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </div>
-          </section>
-
-          {/* 🔹 Vertragsvorschau § 3 aus Single Source */}
-          <section className="rounded-xl border border-slate-300 bg-white p-5 text-sm space-y-3 shadow-sm">
-            <h2 className="font-semibold text-slate-900">
-              {L === "en"
-                ? "Contract preview – § 3 Scope & approach"
-                : "Vertragsvorschau – § 3 Leistungsumfang & Vorgehensweise"}
-            </h2>
-
-            {isSection3VeryEmpty ? (
-              <p className="text-slate-700 text-xs">
-                {L === "en"
-                  ? "Once you have selected at least one role, skills and interaction levels in the briefing, a draft wording for § 3 will appear here."
-                  : "Sobald Sie im Briefing mindestens eine Rolle, fachliche Schwerpunkte und Interaktions-Levels gewählt haben, erscheint hier ein Formulierungsentwurf für § 3."}
-              </p>
-            ) : (
-              <ContractSection3Block
-                lang={L}
-                input={section3Input}
-                className="whitespace-pre-wrap text-xs leading-relaxed text-slate-800"
-              />
-            )}
           </section>
         </>
       )}
 
-      {/* Footer-Aktion auf der Offer-Seite */}
-      <section className="flex justify-between mt-4">
+      {/* Footer-Aktionen auf der Offer-Seite */}
+      <section className="flex flex-wrap items-center justify-between mt-4 gap-3">
+        {/* Links: PDF herunterladen (Angebot + §3) */}
         <button
           type="button"
           onClick={handleDownloadPdf}
-          disabled={isDownloading || isEmpty}
-          className={
-            "rounded-full border px-4 py-2 text-xs transition " +
-            (isDownloading || isEmpty
-              ? "border-slate-300 text-slate-400 bg-slate-100 cursor-not-allowed"
-              : "border-slate-600 text-slate-900 bg-white hover:bg-slate-100")
-          }
+          className="rounded-full border border-slate-400 px-4 py-2 text-xs bg-white text-slate-900 hover:bg-slate-100 transition"
         >
-          {isDownloading
-            ? L === "en"
-              ? "Generating PDF..."
-              : "PDF wird erzeugt..."
-            : L === "en"
-            ? "Download PDF (offer + §3)"
+          {L === "en"
+            ? "Download (offer + §3)"
             : "PDF herunterladen (Angebot + §3)"}
         </button>
 
+        {/* Rechts: Weiter zur Freigabe */}
         <Link
           href="/confirm"
           className="rounded-full bg-slate-900 text-white px-4 py-2 text-xs hover:bg-slate-800 transition"

@@ -6,9 +6,13 @@ import Link from "next/link";
 
 import {
   BEHAVIORS,
+  SKILLS,
+  PSYCH_LEVELS,
+  CARING_LEVELS,
   LOCAL_KEYS,
   type Lang,
   type Behavior,
+  type Level,
   type BehaviorId,
   type PsychoId,
   type CaringId,
@@ -17,11 +21,22 @@ import { useLanguage } from "../lang/LanguageContext";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { ProcessBar } from "../components/ProcessBar";
 import { validateSelection } from "../lib/mandateRules";
-import type { ContractSection3Input } from "../lib/contractSection3";
-import { ContractSection3Block } from "../components/ContractSection3Block";
+import {
+  buildContractSection3,
+  type ContractSection3Input,
+} from "../lib/contractSection3";
+import {
+  getRoleRequirementsFor,
+  getRoleModuleLabel,
+  type RoleId,
+  type RequirementGroup,
+} from "../lib/roleRequirements";
 
 // Rollen aus /explore
 type CardId = "sys" | "ops" | "res" | "coach";
+
+// Notes wie in Offer (für später, falls du Notizen einblenden willst)
+type SkillNotes = Record<string, { need?: string; outcome?: string }>;
 
 export default function ContractPage() {
   const { lang } = useLanguage();
@@ -32,6 +47,7 @@ export default function ContractPage() {
   const [skillIds, setSkillIds] = useState<string[]>([]);
   const [psychoId, setPsychoId] = useState<string>("");
   const [caringId, setCaringId] = useState<string>("");
+  const [notes, setNotes] = useState<SkillNotes>({});
   const [roleIds, setRoleIds] = useState<CardId[]>([]);
 
   // Mandatslogik
@@ -48,10 +64,12 @@ export default function ContractPage() {
     try {
       const formRaw = window.localStorage.getItem(LOCAL_KEYS.form);
       const skillsRaw = window.localStorage.getItem(LOCAL_KEYS.skills);
+      const notesRaw = window.localStorage.getItem(LOCAL_KEYS.notes);
       const rolesRaw = window.localStorage.getItem("brief.selected");
 
       setBrief(formRaw ? JSON.parse(formRaw) : {});
       setSkillIds(skillsRaw ? (JSON.parse(skillsRaw) as string[]) : []);
+      setNotes(notesRaw ? (JSON.parse(notesRaw) as SkillNotes) : {});
       setRoleIds(rolesRaw ? (JSON.parse(rolesRaw) as CardId[]) : []);
       setBehaviorId(window.localStorage.getItem(LOCAL_KEYS.behavior) || "");
       setPsychoId(window.localStorage.getItem(LOCAL_KEYS.psycho) || "");
@@ -59,6 +77,7 @@ export default function ContractPage() {
     } catch {
       setBrief({});
       setSkillIds([]);
+      setNotes({});
       setRoleIds([]);
       setBehaviorId("");
       setPsychoId("");
@@ -66,11 +85,16 @@ export default function ContractPage() {
     }
   }, []);
 
-  // Lookups (nur Behavior wird hier noch für die Meta-Box benötigt)
-  const behavior: Behavior | null = useMemo(
-    () => BEHAVIORS.find((x) => x.id === behaviorId) ?? null,
-    [behaviorId]
-  );
+  // Lookups für Kontexte
+  const { behavior, selectedSkills, psych, caring } = useMemo(() => {
+    const b: Behavior | null =
+      BEHAVIORS.find((x) => x.id === behaviorId) ?? null;
+    const s = SKILLS.filter((s) => skillIds.includes(s.id));
+    const p: Level | null = PSYCH_LEVELS.find((x) => x.id === psychoId) ?? null;
+    const c: Level | null =
+      CARING_LEVELS.find((x) => x.id === caringId) ?? null;
+    return { behavior: b, selectedSkills: s, psych: p, caring: c };
+  }, [behaviorId, skillIds, psychoId, caringId]);
 
   const isEmpty =
     (!brief || Object.keys(brief).length === 0) &&
@@ -86,7 +110,10 @@ export default function ContractPage() {
     ? `${behavior.ctx[L]} – ${behavior.pkg[L]}`
     : "";
 
-  // 🔹 Input für Single Source of Truth § 3
+  const psychLabel = psych ? psych.name[L] : "";
+  const caringLabel = caring ? caring.name[L] : "";
+
+  // 🔹 Single Source of Truth: Input für contractSection3.ts
   const section3Input: ContractSection3Input = {
     behaviorId: behaviorId as BehaviorId | "",
     selectedRoles: roleIds,
@@ -94,6 +121,30 @@ export default function ContractPage() {
     psychoId: psychoId as PsychoId | "",
     caringId: caringId as CaringId | "",
   };
+
+  const section3Text = buildContractSection3(L, section3Input);
+
+  // Absätze für die Web-Vorschau
+  const section3Paragraphs = section3Text
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+
+  // 🔹 Detail-Requirements wie im PDF
+  const ALL_ROLE_IDS: RoleId[] = ["sys", "ops", "res", "coach"];
+  const roleIdsForRequirements: RoleId[] = roleIds.filter((r): r is RoleId =>
+    ALL_ROLE_IDS.includes(r as RoleId)
+  );
+
+  const detailGroups: RequirementGroup[] = [
+    "ziel",
+    "leistung",
+    "mitwirkung",
+    "ergebnis",
+    "zeit",
+    "kommunikation",
+    "abgrenzung",
+  ];
 
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-6 bg-slate-50 text-slate-900 min-h-screen">
@@ -105,6 +156,21 @@ export default function ContractPage() {
       </header>
 
       <ProcessBar current="confirm" />
+
+      {/* 🔎 Debug-Info: was kommt hier wirklich an? */}
+      <section className="rounded-md border border-dashed border-amber-300 bg-amber-50 p-2 text-[11px] text-amber-900 mb-2">
+        <div className="font-semibold mb-1">
+          Debug (nur für dich, später löschbar)
+        </div>
+        <div>
+          <strong>roleIds (aus localStorage brief.selected): </strong>
+          {JSON.stringify(roleIds)}
+        </div>
+        <div>
+          <strong>roleIdsForRequirements (für INCOSE-Blöcke): </strong>
+          {JSON.stringify(roleIdsForRequirements)}
+        </div>
+      </section>
 
       {isEmpty ? (
         <section className="rounded-xl border border-slate-300 bg-white p-8 text-sm flex flex-col items-start gap-4 shadow-sm">
@@ -170,13 +236,94 @@ export default function ContractPage() {
             )}
           </div>
 
-          {/* 🔹 § 3 – gerendert aus Single Source via Wrapper */}
+          {/* § 3 – Leistungsumfang & Vorgehensweise (Single Source aus contractSection3.ts) */}
           <div className="space-y-3 leading-relaxed">
-            <ContractSection3Block
-              lang={L}
-              input={section3Input}
-              className="whitespace-pre-wrap text-xs sm:text-sm font-normal text-slate-900"
-            />
+            <h3 className="font-semibold text-slate-900">
+              {label(
+                "§ 3 Leistungsumfang & Vorgehensweise",
+                "§ 3 Scope of services & delivery approach"
+              )}
+            </h3>
+
+            {/* Haupttext aus contractSection3.ts */}
+            <div className="space-y-2 text-xs leading-relaxed text-slate-800 whitespace-pre-line">
+              {section3Paragraphs.map((p, idx) => (
+                <p key={idx}>{p}</p>
+              ))}
+            </div>
+
+            {/* Detaillierte Leistungsbeschreibung – Rollenmodule wie im PDF */}
+            {roleIdsForRequirements.length > 0 && (
+              <div className="mt-6 space-y-6 text-xs leading-relaxed text-slate-800">
+                {roleIdsForRequirements.map((roleId) => {
+                  const moduleLabel = getRoleModuleLabel(L, roleId);
+                  const requirements = getRoleRequirementsFor(L, roleId);
+                  if (!requirements.length) return null;
+
+                  return (
+                    <div key={roleId}>
+                      <h4 className="font-semibold mb-2">
+                        {L === "en"
+                          ? `Detailed scope of work – role module “${moduleLabel}”`
+                          : `Detaillierte Leistungsbeschreibung – Rollenmodul „${moduleLabel}“`}
+                      </h4>
+
+                      {detailGroups.map((group) => {
+                        const items = requirements.filter(
+                          (r) => r.group === group
+                        );
+                        if (!items.length) return null;
+
+                        const heading =
+                          group === "ziel"
+                            ? L === "en"
+                              ? "A. Purpose and mandate"
+                              : "A. Ziel & Mandatsrahmen"
+                            : group === "leistung"
+                            ? L === "en"
+                              ? "B. Services of the Contractor"
+                              : "B. Leistungen des Auftragnehmers (AN)"
+                            : group === "mitwirkung"
+                            ? L === "en"
+                              ? "C. Client responsibilities"
+                              : "C. Mitwirkungspflichten des Auftraggebers (AG)"
+                            : group === "ergebnis"
+                            ? L === "en"
+                              ? "D. Results / deliverables"
+                              : "D. Ergebnisse / Deliverables"
+                            : group === "zeit"
+                            ? L === "en"
+                              ? "E. Time & fees"
+                              : "E. Zeit & Umfang / Vergütung"
+                            : group === "kommunikation"
+                            ? L === "en"
+                              ? "F. Communication & escalation"
+                              : "F. Kommunikation & Eskalation"
+                            : L === "en"
+                            ? "G. Exclusions / non-services"
+                            : "G. Abgrenzung / Nicht-Leistungen";
+
+                        return (
+                          <div key={group} className="mt-3">
+                            <div className="font-semibold mb-1">{heading}</div>
+                            <ul className="list-disc pl-5 space-y-1">
+                              {items.map((item) => (
+                                <li key={item.id}>
+                                  <span className="font-mono text-[11px] mr-1">
+                                    [{item.id}]
+                                  </span>
+                                  {item.text}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Hinweis auf Entwurfscharakter */}

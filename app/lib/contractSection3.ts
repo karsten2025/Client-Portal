@@ -35,7 +35,7 @@ export function buildContractSection3(
   const caringId = input.caringId ?? "";
 
   // -----------------------------
-  // 1) Absatz (1) – haben wir schon mal definiert, hier leicht generalisiert
+  // 1) Absatz (1)
   // -----------------------------
   const part1 =
     L === "de"
@@ -190,7 +190,6 @@ export function buildContractSection3(
 
   // -----------------------------
   // 4) Optional: kurzer Hinweis zum aktuellen 5a/5b-Stand (psycho / caring)
-  // (nur ein Satz, weil die inhaltliche Beschreibung schon in Brief/Offer steckt)
   // -----------------------------
 
   const psychoPackage = psychoId

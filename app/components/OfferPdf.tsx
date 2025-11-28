@@ -6,7 +6,14 @@ import {
   buildContractSection3,
   type ContractSection3Input,
 } from "../lib/contractSection3";
+
 import type { Lang } from "../lib/catalog";
+import {
+  getRoleRequirementsFor,
+  getRoleModuleLabel,
+  type RoleId,
+  type RequirementGroup,
+} from "../lib/roleRequirements";
 
 // Gleicher Typ wie in OfferPage (dort nur als Type-Import verwendet)
 export type SkillNotes = Record<string, { need?: string; outcome?: string }>;
@@ -63,6 +70,13 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 2,
   },
+  subheading: {
+    fontSize: 12,
+    fontWeight: "bold",
+    marginTop: 8,
+    marginBottom: 4,
+  },
+
   small: {
     fontSize: 9,
   },
@@ -98,16 +112,12 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: "#666666",
   },
-  // Neuer Footer unten mit Seitenzahl in der Mitte
+  // Neuer Footer unten mit Seitenzahl
   footer: {
     position: "absolute",
     left: 55,
     right: 55,
-
-    // WICHTIG: bottom raus, stattdessen top groß setzen
-    // A4 hat ca. 842pt Höhe -> 760 ist kurz über dem Seitenrand
-    top: 760,
-
+    top: 760, // nah am Seitenende
     borderTopWidth: 0.5,
     borderTopColor: "#999999",
     paddingTop: 4,
@@ -127,6 +137,13 @@ const styles = StyleSheet.create({
   },
   footerRight: {
     textAlign: "right",
+    flex: 1,
+  },
+  signatureRow: {
+    flexDirection: "row",
+    marginTop: 20,
+  },
+  signatureCol: {
     flex: 1,
   },
 });
@@ -154,14 +171,37 @@ export function OfferPdfDocument(props: OfferPdfProps) {
 
   const label = (de: string, en: string) => (L === "en" ? en : de);
 
+  // Rollen, die wirklich bekannt sind
+  const roleIdsRaw = section3Input.selectedRoles ?? [];
+  const ALL_ROLES: RoleId[] = ["sys", "ops", "res", "coach"];
+  const roleIds: RoleId[] = roleIdsRaw.filter((r): r is RoleId =>
+    ALL_ROLES.includes(r as RoleId)
+  );
+
+  const detailGroups: RequirementGroup[] = [
+    "ziel",
+    "leistung",
+    "mitwirkung",
+    "ergebnis",
+    "zeit",
+    "kommunikation",
+    "abgrenzung",
+  ];
+
+  // Kontaktname für Anrede
+  const contactName = (brief.kontakt || "").trim();
+
+  const salutation =
+    L === "de"
+      ? contactName
+        ? `Guten Tag ${contactName},`
+        : "Sehr geehrte Damen und Herren,"
+      : contactName
+      ? `Dear ${contactName},`
+      : "Dear Sir or Madam,";
+
   // 🔹 Single Source: § 3 Text aus contractSection3.ts
   const section3Text = buildContractSection3(lang, section3Input);
-
-  // In sinnvolle Absätze zerlegen (doppelte Zeilenumbrüche = neuer Absatz)
-  const section3Paragraphs = section3Text
-    .split(/\n{2,}/)
-    .map((p) => p.trim())
-    .filter((p) => p.length > 0);
 
   // Datum (heute) – simple Variante
   const today = new Date().toLocaleDateString(locale, {
@@ -254,14 +294,30 @@ export function OfferPdfDocument(props: OfferPdfProps) {
 
         {/* BODY – Angebot + Vertrag */}
         <View style={styles.body}>
-          {/* Betreffzeile */}
+          {/* Betreff + Anrede */}
           <View style={styles.section}>
-            <Text style={{ fontSize: 12, fontWeight: "bold", marginBottom: 6 }}>
+            <Text
+              style={{
+                fontSize: 12,
+                fontWeight: "bold",
+                marginBottom: 10,
+              }}
+            >
               {label(`Angebot – ${projectLabel}`, `Offer – ${projectLabel}`)}
             </Text>
+
+            <Text
+              style={{
+                fontSize: 10,
+                marginBottom: 8,
+              }}
+            >
+              {salutation}
+            </Text>
+
             <Text style={styles.paragraph}>
               {label(
-                "Vielen Dank für Ihre Anfrage und das entgegengebrachte Vertrauen. Auf Grundlage der vorliegenden Informationen biete ich Ihnen für das oben genannte Vorhaben folgende Unterstützungsleistung an:",
+                "vielen Dank für Ihre Anfrage und das entgegengebrachte Vertrauen. Auf Grundlage der vorliegenden Informationen biete ich Ihnen für das oben genannte Vorhaben folgende Unterstützungsleistung an:",
                 "Thank you for your request and the trust placed in this collaboration. Based on the information currently available, I propose the following support for the above project:"
               )}
             </Text>
@@ -429,26 +485,122 @@ export function OfferPdfDocument(props: OfferPdfProps) {
           <View break />
 
           {/* Vertragsseite: § 3 Leistungsumfang & Vorgehensweise */}
-          <View style={styles.section}>
-            <Text style={styles.smallHeading}>
+          <View style={[styles.section, { marginTop: 16 }]}>
+            <Text style={styles.subheading}>
               {label(
-                "Dienstvertrag – Auszug § 3 Leistungsumfang & Vorgehensweise",
-                "Service agreement – excerpt § 3 Scope of Services & Delivery Approach"
+                "§ 3 Leistungsumfang & Vorgehensweise",
+                "§ 3 Scope of services & delivery approach"
               )}
             </Text>
-            <Text style={[styles.muted, { marginBottom: 6 }]}>
-              {label(
-                "Bezogen auf das vorstehende Angebot zu folgendem Projekt:",
-                "With reference to the above offer for the following project:"
-              )}{" "}
-              {projectLabel}
-            </Text>
 
-            {section3Paragraphs.map((p, idx) => (
-              <Text key={idx} style={styles.paragraph}>
-                {p}
-              </Text>
-            ))}
+            {/* Bisheriger Vertragstext aus contractSection3.ts */}
+            <Text style={styles.paragraph}>{section3Text}</Text>
+
+            {/* Detailblöcke für alle gewählten Rollen (sys / ops / res / coach) */}
+            {roleIds.length > 0 && (
+              <View style={{ marginTop: 12 }}>
+                {roleIds.map((roleId, index) => {
+                  const requirements = getRoleRequirementsFor(lang, roleId);
+                  if (!requirements.length) return null;
+
+                  const moduleLabel = getRoleModuleLabel(lang, roleId);
+                  const headingText =
+                    lang === "en"
+                      ? `Detailed scope of work – role module “${moduleLabel}”`
+                      : `Detaillierte Leistungsbeschreibung – Rollenmodul „${moduleLabel}“`;
+
+                  return (
+                    <View
+                      key={roleId}
+                      style={{ marginTop: index === 0 ? 0 : 12 }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          fontWeight: "bold",
+                          marginBottom: 4,
+                        }}
+                      >
+                        {headingText}
+                      </Text>
+
+                      {detailGroups.map((group) => {
+                        const items = requirements.filter(
+                          (r) => r.group === group
+                        );
+                        if (!items.length) return null;
+
+                        let groupHeading: string;
+                        switch (group) {
+                          case "ziel":
+                            groupHeading =
+                              lang === "en"
+                                ? "A. Purpose and mandate"
+                                : "A. Ziel & Mandatsrahmen";
+                            break;
+                          case "leistung":
+                            groupHeading =
+                              lang === "en"
+                                ? "B. Services of the Contractor"
+                                : "B. Leistungen des Auftragnehmers (AN)";
+                            break;
+                          case "mitwirkung":
+                            groupHeading =
+                              lang === "en"
+                                ? "C. Client responsibilities"
+                                : "C. Mitwirkungspflichten des Auftraggebers (AG)";
+                            break;
+                          case "ergebnis":
+                            groupHeading =
+                              lang === "en"
+                                ? "D. Results / deliverables"
+                                : "D. Ergebnisse / Deliverables";
+                            break;
+                          case "zeit":
+                            groupHeading =
+                              lang === "en"
+                                ? "E. Time & fees"
+                                : "E. Zeit & Umfang / Vergütung";
+                            break;
+                          case "kommunikation":
+                            groupHeading =
+                              lang === "en"
+                                ? "F. Communication & escalation"
+                                : "F. Kommunikation & Eskalation";
+                            break;
+                          default:
+                            groupHeading =
+                              lang === "en"
+                                ? "G. Exclusions / non-services"
+                                : "G. Abgrenzung / Nicht-Leistungen";
+                            break;
+                        }
+
+                        return (
+                          <View key={group} style={{ marginTop: 6 }}>
+                            <Text
+                              style={{
+                                fontWeight: "bold",
+                                marginBottom: 2,
+                              }}
+                            >
+                              {groupHeading}
+                            </Text>
+
+                            {items.map((item) => (
+                              <Text
+                                key={item.id}
+                                style={styles.paragraph}
+                              >{`[${item.id}] ${item.text}`}</Text>
+                            ))}
+                          </View>
+                        );
+                      })}
+                    </View>
+                  );
+                })}
+              </View>
+            )}
           </View>
 
           <View style={styles.section}>
@@ -458,6 +610,63 @@ export function OfferPdfDocument(props: OfferPdfProps) {
                 "Note: This contract page is a draft. The final contract version may contain additional provisions (e.g. on fees, liability, confidentiality). Only the version signed by both parties is legally binding."
               )}
             </Text>
+          </View>
+
+          {/* Unterschriftsbereich AG / AN – zweispaltig */}
+          <View style={[styles.section, { marginTop: 20 }]}>
+            <View style={styles.signatureRow}>
+              {/* Linke Spalte: Auftraggeber (AG) */}
+              <View style={[styles.signatureCol, { marginRight: 40 }]}>
+                <Text style={styles.paragraph}>
+                  {label("Für den Auftraggeber (AG):", "For the Client (AG):")}
+                </Text>
+
+                <Text style={{ height: 16 }} />
+
+                <Text style={styles.paragraph}>{clientName}</Text>
+
+                <Text style={{ height: 10 }} />
+
+                <Text style={styles.small}>
+                  {label(
+                    "Ort, Datum: ___________________________",
+                    "Place, date: ___________________________"
+                  )}
+                </Text>
+                <Text style={[styles.small, { marginTop: 8 }]}>
+                  {label(
+                    "Unterschrift: __________________________",
+                    "Signature: __________________________"
+                  )}
+                </Text>
+              </View>
+
+              {/* Rechte Spalte: Auftragnehmer (AN) */}
+              <View style={styles.signatureCol}>
+                <Text style={styles.paragraph}>
+                  {label("Für den Auftragnehmer (AN):", "For the Contractor:")}
+                </Text>
+
+                <Text style={{ height: 16 }} />
+
+                <Text style={styles.paragraph}>{supplierName}</Text>
+
+                <Text style={{ height: 10 }} />
+
+                <Text style={styles.small}>
+                  {label(
+                    "Ort, Datum: ___________________________",
+                    "Place, date: ___________________________"
+                  )}
+                </Text>
+                <Text style={[styles.small, { marginTop: 8 }]}>
+                  {label(
+                    "Unterschrift: __________________________",
+                    "Signature: __________________________"
+                  )}
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
       </Page>
