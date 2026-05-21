@@ -327,8 +327,8 @@ export function OfferPdfDocument(props: OfferPdfProps) {
           <View style={styles.section}>
             <Text style={styles.smallHeading}>
               {label(
-                "2. Verhaltenpaket (Kontext & Stil)",
-                "2. Behaviour package (context & style)"
+                "2. Mandats-Kontext & Strategisches Wirkprofil",
+                "2. Mandate Context & Strategic Impact Profile"
               )}
             </Text>
             <Text style={styles.paragraph}>
@@ -341,8 +341,8 @@ export function OfferPdfDocument(props: OfferPdfProps) {
           <View style={styles.section}>
             <Text style={styles.smallHeading}>
               {label(
-                "3. Fachliche Rollen & Qualifikationen",
-                "3. Professional roles & skills"
+                "3. Mandats-Kontext & Strategisches Wirkprofil",
+                "3. Mandate Context & Strategic Impact Profile"
               )}
             </Text>
             {selectedSkills.length === 0 ? (
@@ -397,8 +397,8 @@ export function OfferPdfDocument(props: OfferPdfProps) {
           <View style={styles.section}>
             <Text style={styles.smallHeading}>
               {label(
-                "4. Psychosoziale Interaktions-Tiefe",
-                "4. Psychosocial intervention depth"
+                "4. Eingriffstiefe & System-Irritation",
+                "4. Depth of Intervention & System Irritation"
               )}
             </Text>
             <Text style={styles.paragraph}>
@@ -414,8 +414,8 @@ export function OfferPdfDocument(props: OfferPdfProps) {
           <View style={styles.section}>
             <Text style={styles.smallHeading}>
               {label(
-                "5. Grad der emotionalen Investition (Caring-Level)",
-                "5. Degree of emotional investment (caring level)"
+                "5. Operative Identifikation & Haftungs-Kompensation",
+                "5. Operational Identification & Surcharge-Compensation"
               )}
             </Text>
             <Text style={styles.paragraph}>
@@ -531,48 +531,48 @@ export function OfferPdfDocument(props: OfferPdfProps) {
                         if (!items.length) return null;
 
                         let groupHeading: string;
-                        switch (group) {
+                          switch (group) {
                           case "ziel":
                             groupHeading =
                               lang === "en"
-                                ? "A. Purpose and mandate"
-                                : "A. Ziel & Mandatsrahmen";
+                                ? "A) Mandate Objective & System Context"
+                                : "A) Mandatsziel & System-Kontext";
                             break;
                           case "leistung":
                             groupHeading =
                               lang === "en"
-                                ? "B. Services of the Contractor"
-                                : "B. Leistungen des Auftragnehmers (AN)";
+                                ? "B) Scope of Services (Strategic/Tactical/Operational)"
+                                : "B) Leistungsumfang (Strategisch/Taktisch/Operativ)";
                             break;
                           case "mitwirkung":
                             groupHeading =
                               lang === "en"
-                                ? "C. Client responsibilities"
-                                : "C. Mitwirkungspflichten des Auftraggebers (AG)";
+                                ? "C) Client Cooperation & General Dependencies"
+                                : "C) Mitwirkungspflichten des Auftraggebers";
                             break;
                           case "ergebnis":
                             groupHeading =
                               lang === "en"
-                                ? "D. Results / deliverables"
-                                : "D. Ergebnisse / Deliverables";
+                                ? "D) Deliverables & Systemic Artifacts"
+                                : "D) Artefakte & System-Ergebnisse";
                             break;
                           case "zeit":
                             groupHeading =
                               lang === "en"
-                                ? "E. Time & fees"
-                                : "E. Zeit & Umfang / Vergütung";
+                                ? "E) Timeline, Contingent & Compensation Structure"
+                                : "E) Zeitrahmen, Kontingent & Verg\u00fctungsstruktur";
                             break;
                           case "kommunikation":
                             groupHeading =
                               lang === "en"
-                                ? "F. Communication & escalation"
-                                : "F. Kommunikation & Eskalation";
+                                ? "F) Communication Matrix & Data Signals"
+                                : "F) Kommunikations-Matrix & Datensignale";
                             break;
                           default:
                             groupHeading =
                               lang === "en"
-                                ? "G. Exclusions / non-services"
-                                : "G. Abgrenzung / Nicht-Leistungen";
+                                ? "G) Systemic Boundary (Out of Scope)"
+                                : "G) Systemische Abgrenzung (Out of Scope)";
                             break;
                         }
 

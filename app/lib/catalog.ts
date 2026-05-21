@@ -110,18 +110,9 @@ export const BEHAVIORS: Behavior[] = [
 /* ------------------------------------------------------------------ */
 
 export type SkillId =
-  | "living-systems"
-  | "complex-systems"
-  | "eng"
-  | "pm-waterfall"
-  | "pm-agile"
-  | "pm-hybrid"
-  | "process"
-  | "quality"
-  | "pmo"
-  | "cognitive"
-  | "teamlead"
-  | "deptlead";
+  | "strategic_architecture"
+  | "tactical_governance"
+  | "operational_realization";
 
 export type Skill = {
   id: SkillId;
@@ -133,225 +124,60 @@ export type Skill = {
 
 export const SKILLS: Skill[] = [
   {
-    id: "living-systems",
+    id: "strategic_architecture",
     title: {
-      de: "Resiliente Unternehmens/Organisations-Architektur (Living Systems)",
-      en: "Resilient Enterprise/Organizational Architecture (Living Systems)",
+      de: "Strategische System-Architektur (Weitblick / Governance)",
+      en: "Strategic System Architecture (Vision / Governance)",
     },
     offerShort: {
-      de: "Gestaltung anpassungsfähiger Arbeitsumgebungen und lernender Strukturen.",
-      en: "Design of adaptive work environments and learning structures.",
+      de: "Langfristige Systemausrichtung, zukunftssichere KI-Integration (Governance Hub), Strukturaufbau und Ausrichtung komplexer Stakeholder-Interessen im mitbestimmten Umfeld.",
+      en: "Long-term system alignment, future-proof AI integration (Governance Hub), structural setup, and alignment of complex stakeholder interests within co-determined environments.",
     },
     needPlaceholder: {
-      de: "[ Hier beschreiben Sie Ihren Bedarf… ]",
-      en: "[ Describe your need here… ]",
+      de: "[ z. B. Welche strategischen Weichen müssen gestellt werden? ]",
+      en: "[ e.g., Which strategic directions need to be set? ]",
     },
     outcomePlaceholder: {
-      de: "[ Hier definieren Sie das gewünschte Ergebnis… ]",
-      en: "[ Define the desired outcome here… ]",
+      de: "[ z. B. Governance-Struktur steht, KI-Roadmap ist freigegeben. ]",
+      en: "[ e.g., Governance structure established, AI roadmap approved. ]",
     },
   },
   {
-    id: "complex-systems",
+    id: "tactical_governance",
     title: {
-      de: "Komplexitätsmanagement & System-Design (CAS)",
-      en: "Complexity Management & System Design (CAS)",
+      de: "Taktische Steuerung (Prozesse / Intermediäre Synchronisation)",
+      en: "Tactical Governance (Processes / Intermediary Synchronization)",
     },
     offerShort: {
-      de: "Design von Prozessen für unvorhersehbare Märkte (basierend auf Komplexitätstheorie).",
-      en: "Design of processes for unpredictable markets (based on complexity theory).",
+      de: "Mittelfristiges Projekt-Framework, methoden-agnostische Synchronisation (Klassisch/Agil/Hybrid), PMO-Strukturen und die Auflösung von Schnittstellen-Blockaden.",
+      en: "Medium-term project framework, method-agnostic synchronization (Traditional/Agile/Hybrid), PMO structures, and resolution of interface blockages.",
     },
     needPlaceholder: {
-      de: "[ Hier beschreiben Sie Ihren Bedarf… ]",
-      en: "[ Describe your need here… ]",
+      de: "[ z. B. Welche Prozesse oder Schnittstellen blockieren den Fortschritt? ]",
+      en: "[ e.g., Which processes or interfaces are blocking progress? ]",
     },
     outcomePlaceholder: {
-      de: "[ Hier definieren Sie das gewünschte Ergebnis… ]",
-      en: "[ Define the desired outcome here… ]",
+      de: "[ z. B. PMO läuft, Synchronisation zwischen Teams ist sichergestellt. ]",
+      en: "[ e.g., PMO running, synchronization between teams ensured. ]",
     },
   },
   {
-    id: "eng",
+    id: "operational_realization",
     title: {
-      de: "ITechnische Beratung & Analyse (Engineering)",
-      en: "Technical Consulting & Analysis (Engineering)",
+      de: "Operative Realisierung (Pragmatismus / Werksebene)",
+      en: "Operational Realization (Pragmatism / Factory Floor)",
     },
     offerShort: {
-      de: "Technisches Verständnis & analytische Bewertung komplexer Sachverhalte (als Dipl.-Ing.(FH)).",
-      en: "Technical understanding & analytical assessment of complex matters (as M.Eng.).",
+      de: "Direkte, messbare Umsetzung vor Ort. Krisen-Intervention, Schließung von Performanz-Lücken, Task-Force-Leitung und Absicherung harter Meilensteine direkt auf der Werksebene.",
+      en: "Direct, measurable implementation on-site. Crisis intervention, closing performance gaps, task force management, and securing hard milestones directly on the factory floor.",
     },
     needPlaceholder: {
-      de: "[ Hier beschreiben Sie Ihren Bedarf… ]",
-      en: "[ Describe your need here… ]",
+      de: "[ z. B. Welcher Meilenstein ist in Verzug oder welche Krise muss gelöst werden? ]",
+      en: "[ e.g., Which milestone is overdue or which crisis needs resolving? ]",
     },
     outcomePlaceholder: {
-      de: "[ Hier definieren Sie das gewünschte Ergebnis… ]",
-      en: "[ Define the desired outcome here… ]",
-    },
-  },
-  {
-    id: "pm-waterfall",
-    title: {
-      de: "PM klassisch (Wasserfall)",
-      en: "Project management classic (waterfall)",
-    },
-    offerShort: {
-      de: "Struktur, Planung & Steuerung nach etablierten Standards (z. B. PMP/PRINCE2).",
-      en: "Structure, planning & control per standards (e.g., PMP/PRINCE2).",
-    },
-    needPlaceholder: {
-      de: "[ z. B. Großprojekt X ist aus dem Ruder… ]",
-      en: "[ e.g., major project X is off track… ]",
-    },
-    outcomePlaceholder: {
-      de: "[ z. B. Projekt ist wieder im Zeit/Budget-Plan… ]",
-      en: "[ e.g., project is back on time/budget… ]",
-    },
-  },
-  {
-    id: "pm-agile",
-    title: {
-      de: "Projektmanagement Agil (Scrum/Kanban etc.)",
-      en: "Project Management Agile (Scrum/Kanban etc.)",
-    },
-    offerShort: {
-      de: "IIterative Steuerung, Wertfokus und methodisches Coaching von Teams.",
-      en: "Iterative control, value focus, and methodical coaching of teams.",
-    },
-    needPlaceholder: {
-      de: "[ z. B. Einführung von Scrum/Kanabn in 3 Teams… ]",
-      en: "[ e.g., introduce Scrum/Kanban to 3 teams… ]",
-    },
-    outcomePlaceholder: {
-      de: "[ z. B. Teams arbeiten in Sprints, Velocity messbar… ]",
-      en: "[ e.g., teams run sprints, velocity measurable… ]",
-    },
-  },
-  {
-    id: "pm-hybrid",
-    title: { de: "Projektmanagement Hybrid", en: "Project Management Hybrid" },
-    offerShort: {
-      de: "Integrative Verzahnung klassischer (Hardware) und agiler (Software) Methoden.",
-      en: "Integrative interlocking of classic (hardware) and agile (software) methods.",
-    },
-    needPlaceholder: {
-      de: "[ z. B. Hardware trifft Software… ]",
-      en: "[ e.g., hardware meets software… ]",
-    },
-    outcomePlaceholder: {
-      de: "[ z. B. Integrierter Release-Plan existiert… ]",
-      en: "[ e.g., integrated release plan exists… ]",
-    },
-  },
-  {
-    id: "process",
-    title: {
-      de: "Prozessmanagement-Beratung (BPMN)",
-      en: "Process Management Consulting (BPMN)",
-    },
-    offerShort: {
-      de: "Analyse, Konzeption und Begleitung der Optimierung von Geschäftsabläufen.",
-      en: "Analysis, conception, and support in the optimization of business processes.",
-    },
-    needPlaceholder: {
-      de: "[ z. B. Unser Onboarding-Prozess ist ineffizient… ]",
-      en: "[ e.g., our onboarding process is inefficient… ]",
-    },
-    outcomePlaceholder: {
-      de: "[ z. B. Prozesszeit um 20 % reduziert… ]",
-      en: "[ e.g., process time reduced by 20%… ]",
-    },
-  },
-  {
-    id: "quality",
-    title: {
-      de: "Qualitätsmanagement-Support",
-      en: "Quality Management Support",
-    },
-    offerShort: {
-      de: "Etablierung von Standards und methodische Vorbereitung interner/externer Audits (z. B. ISO).",
-      en: "Establishment of standards and methodical preparation for internal/external audits (e.g., ISO).",
-    },
-    needPlaceholder: {
-      de: "[ z. B. Reklamationen reduzieren… ]",
-      en: "[ e.g., reduce claims… ]",
-    },
-    outcomePlaceholder: {
-      de: "[ z. B. ISO-Zertifizierung bestanden… ]",
-      en: "[ e.g., ISO certification passed… ]",
-    },
-  },
-  {
-    id: "pmo",
-    title: { de: "PMO-Consulting & Setup", en: "PMO Consulting & Setup" },
-    offerShort: {
-      de: "Aufbau & operative Steuerung (Strategisch/Taktisch) von Project Management Offices.",
-      en: "Setup & operational control (Strategic/Tactical) of Project Management Offices.",
-    },
-    needPlaceholder: {
-      de: "[ z. B. PMO liefert keine strategischen Inputs… ]",
-      en: "[ e.g., PMO lacks strategic input… ]",
-    },
-    outcomePlaceholder: {
-      de: "[ z. B. Portfolio-Dashboard für C-Level etabliert… ]",
-      en: "[ e.g., C-level portfolio dashboard established… ]",
-    },
-  },
-  {
-    id: "cognitive",
-    title: {
-      de: "KI & Kognitives Projektmanagement",
-      en: "AI & Cognitive Project Management",
-    },
-    offerShort: {
-      de: "Management von KI-Initiativen: Schnittstellen-Management zwischen Business & Data Science.",
-      en: "Management of AI initiatives: Interface management between Business & Data Science.",
-    },
-    needPlaceholder: {
-      de: "[ z. B. Pilotprojekt ‚RPA‘ muss gesteuert werden… ]",
-      en: "[ e.g., RPA pilot needs steering… ]",
-    },
-    outcomePlaceholder: {
-      de: "[ z. B. Business Case validiert, Pilot live… ]",
-      en: "[ e.g., business case validated, pilot live… ]",
-    },
-  },
-  {
-    id: "teamlead",
-    title: {
-      de: "Team-Koordination & Laterale Führung",
-      en: "Team Coordination & Lateral Leadership",
-    },
-    offerShort: {
-      de: "Fachliche Steuerung von Teams und operative Koordination ohne Disziplinarbefugnis.",
-      en: "Functional steering of teams and operational coordination without disciplinary authority.",
-    },
-    needPlaceholder: {
-      de: "[ z. B. Teamleiter X ist ausgefallen… ]",
-      en: "[ e.g., team lead X unavailable… ]",
-    },
-    outcomePlaceholder: {
-      de: "[ z. B. Team ist stabilisiert, operative Ziele erreicht… ]",
-      en: "[ e.g., team stabilised, operating targets met… ]",
-    },
-  },
-  {
-    id: "deptlead",
-    title: {
-      de: "Interim Management (PMO / Fachbereich)",
-      en: "Interim Management (PMO / Department)",
-    },
-    offerShort: {
-      de: "Temporäre Übernahme von Management-Aufgaben und Prozessverantwortung auf Mandatsbasis.",
-      en: "Temporary assumption of management tasks and process responsibility on a mandate basis.",
-    },
-    needPlaceholder: {
-      de: "[ z. B. Vakanz für 6 Monate überbrücken… ]",
-      en: "[ e.g., cover 6-month vacancy… ]",
-    },
-    outcomePlaceholder: {
-      de: "[ z. B. Abteilung ist stabil geführt, Übergabe erfolgt… ]",
-      en: "[ e.g., department stable, handover complete… ]",
+      de: "[ z. B. Meilenstein erreicht, Performanz-Lücke geschlossen, Stabilisierung nachweisbar. ]",
+      en: "[ e.g., Milestone reached, performance gap closed, stabilization measurable. ]",
     },
   },
 ];
@@ -388,12 +214,12 @@ export const PSYCH_LEVELS: Level[] = [
   {
     id: "psych-a",
     name: {
-      de: "Paket A: Der Struktur-Architekt (Basis-Level)",
-      en: "Package A: The Structure Architect (Basic Level)",
+      de: "Prozessbegleitung & Monitoring",
+      en: "Process Guidance & Monitoring",
     },
     focus: {
-      de: "Fokus auf Ordnung & Transparenz.",
-      en: "Focus on order and structure.",
+      de: "Begleitende Steuerung bei stabiler Systemdynamik.",
+      en: "Accompanying control under stable system dynamics.",
     },
     benefit: {
       de: "Hohe administrative Transparenz und verbesserte Planbarkeit (Compliance).",
@@ -420,12 +246,12 @@ export const PSYCH_LEVELS: Level[] = [
   {
     id: "psych-b",
     name: {
-      de: "Paket B: Der Resilienz-Schild (Advanced / Servant Leadership)",
-      en: "Package B: Resilience shield (advanced / servant leadership)",
+      de: "Strukturelle Restrukturierung",
+      en: "Structural Restructuring",
     },
     focus: {
-      de: "Fokus auf Team-Schutz & Befähigung.",
-      en: "Focus on Team Protection & Enablement.",
+      de: "Aktiver Eingriff in verh\u00e4rtete Schnittstellen und Prozesse bei erh\u00f6hter Komplexit\u00e4t.",
+      en: "Active intervention in hardened interfaces and processes under increased complexity.",
     },
     benefit: {
       de: "Stabile, leistungsfähige Teams und reduzierte Reibungsverluste in Stressphasen.",
@@ -452,12 +278,12 @@ export const PSYCH_LEVELS: Level[] = [
   {
     id: "psych-c",
     name: {
-      de: "Paket C: Der Sensemaker & Diplomat (Expert / Systemisch)",
-      en: "Package C: Sensemaker & diplomat (expert / systemic)",
+      de: "Fundamentale System-Reorganisation",
+      en: "Fundamental System Reorganization",
     },
     focus: {
-      de: "Fokus auf Stakeholder-Management & Komplexität.",
-      en: "Focus on stakeholder management and complexity.",
+      de: "Tiefgreifende Neuausrichtung bei akutem Systemversagen oder Blockadesituationen.",
+      en: "Deep realigning during acute system failure or total deadlock situations.",
     },
     benefit: {
       de: "Sicherung der Handlungsfähigkeit in politisch komplexen Umfeldern und Schutz des Wertes.",
@@ -487,8 +313,8 @@ export const CARING_LEVELS: Level[] = [
   {
     id: "care-a",
     name: {
-      de: "Paket A: Fokus auf Auftragserfüllung (Professionelle Distanz)",
-      en: "Package A: Focus on Execution (Professional Distance)",
+      de: "Objektive Beraterdistanz",
+      en: "Objective Consultant Distance",
     },
     focus: {
       de: "Sachlich, effizient, Scope-orientiert. Der Agent agiert fokussiert auf Basis der vereinbarten Deliverables.",
@@ -500,8 +326,8 @@ export const CARING_LEVELS: Level[] = [
     },
     priceFactor: 1.0,
     tagline: {
-      de: "Professionell, distanziert, sachlich.",
-      en: "Professional, distant, factual.",
+      de: "Reine methodische Steuerung und unparteiische Analyse von au\u00dfen.",
+      en: "Pure methodical governance and impartial analysis from the outside.",
     },
     definition: {
       de: "Der Agent führt sauber aus, die emotionale Beteiligung beschränkt sich auf ein Minimum.",
@@ -527,8 +353,8 @@ export const CARING_LEVELS: Level[] = [
   {
     id: "care-b",
     name: {
-      de: "Paket B: Aktives Stakeholder-Engagement (Servant Leadership)",
-      en: "Package B: Active Stakeholder Engagement (Servant Leadership)",
+      de: "Unternehmerische Mitverantwortung",
+      en: "Entrepreneurial Co-Responsibility",
     },
     focus: {
       de: "Empathisch, teamorientiert, schützend. Der Agent kümmert sich aktiv um die Leistungsfähigkeit des Teams und das Umfeld.",
@@ -540,12 +366,12 @@ export const CARING_LEVELS: Level[] = [
     },
     priceFactor: 1.5,
     tagline: {
-      de: "Empathisch, aber klar abgegrenzt.",
-      en: "Empathetic, but clearly bounded.",
+      de: "Tiefe operative Integration. Ich denke und handle im Sinne Ihrer Werksziele.",
+      en: "Deep operational integration. Active alignment with your factory and business targets.",
     },
     definition: {
-      de: "Der Projektleiter kümmert sich spürbar um Team und Stakeholder, bleibt aber gut abgegrenzt.",
-      en: "The project lead visibly cares for team and stakeholders, while maintaining boundaries.",
+      de: "Der Agent kümmert sich spürbar um Team und Stakeholder, bleibt aber gut abgegrenzt.",
+      en: "The agent visibly cares for team and stakeholders, while maintaining boundaries.",
     },
     offer: {
       de: "Aktives Stakeholder-Management, Moderation von Spannungen, Schutz der Kernteams („Shielding“)",
@@ -567,8 +393,8 @@ export const CARING_LEVELS: Level[] = [
   {
     id: "care-c",
     name: {
-      de: "Paket C: Maximale Ergebnis-Dedikation (Unternehmerisches Denken)",
-      en: "Package C: Maximum Result Dedication (Entrepreneurial Mindset)",
+      de: "Interim-Vollkaskohaftung (Mental Ownership)",
+      en: "Interim Mental Ownership",
     },
     focus: {
       de: "Hochidentifiziert, politisch versiert, intensiv. Der Agent vertritt die Interessen mit unternehmerischem Mindset („Act like an owner, stay a consultant“).",
@@ -580,8 +406,8 @@ export const CARING_LEVELS: Level[] = [
     },
     priceFactor: 2.0,
     tagline: {
-      de: "Als wäre es das eigene Unternehmen.",
-      en: "As if it were their own company.",
+      de: "Maximale Identifikation. Kompensation des pers\u00f6nlichen Risikos kritischer Transformationsentscheidungen im Konsens mit der Mitbestimmung.",
+      en: "Maximum identification. Compensation of personal risk during critical transformation decisions in alignment with co-determination.",
     },
     definition: {
       de: "Der Agent identifiziert sich maximal mit den Zielen des Unternehmens und geht politisch in Vorleistung.",

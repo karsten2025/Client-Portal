@@ -40,12 +40,12 @@ const TEXT: Record<
   }
 > = {
   de: {
-    title: "Was passt zu Ihrem Anliegen?",
+    title: "Architektur-Konfiguration: Wählen Sie das Wirkprofil für Ihr System",
     subtitle:
-      "Wählen Sie 1–2 Rollen. Formulierungen können Sie später im Brief anpassen.",
+      "Wählen Sie 1\u20132 strategische Hebel aus, die Ihre aktuelle Unternehmung benötigt. Im nächsten Schritt präzisieren wir gemeinsam das operative Briefing.",
     buttonAdd: "Zum Brief hinzufügen",
     buttonRemove: "Entfernen",
-    next: "Weiter: Brief erstellen",
+    next: "Konfiguration bestätigen: Zum Projekt-Briefing \u2794",
     ranks: {
       sys: "Bube",
       ops: "Dame",
@@ -54,35 +54,34 @@ const TEXT: Record<
     },
     cards: {
       sys: {
-        title:
-          "Interim Management & Produkt, Projekt, Programm & Portfolio-Steuerung",
+        title: "Interim Management & Krisen-Governance",
         blurb:
-          "Ich bringe Ihre kritischen Initiativen auf Kurs. Als Interim-Manager übernehme ich temporär die operative Steuerung Ihrer Projekte oder Portfolios, schließe Vakanzen und sorge dafür, dass Ergebnisse pünktlich geliefert werden – ohne Reibungsverluste.",
+          "Stabilisierung von Projekten in Schieflage. Reduktion administrativer Kosten, Auflösung von Schnittstellen-Blockaden und Steuerung komplexer Portfolios nach bewährten Standards \u2013 Strategisch, Taktisch, Operational.",
       },
       ops: {
-        title: "Betriebssystem Performer",
+        title: "V-OS System-Integration (Hardware-Software-Symbiose)",
         blurb:
-          "Ich richte Ihre Prozesse und Systeme auf Skalierbarkeit aus. Ich analysiere Ihre Wertschöpfungsketten und transformiere starre Abläufe in ein leistungsfähiges „Betriebssystem“, das Ihre Teams entlastet und messbare Effizienz schafft.",
+          "Implementierung eines Value Operating Systems. Verankerung von PnG Governance Hubs als Single Source of Truth, methoden-agnostische Synchronisation (V-Modell meets Agile) und RAG-gestützte Compliance zur Verkürzung von Freigabezeiten.",
       },
       res: {
-        title: "Strategische Resonanz-Steuerung",
+        title: "Strategische Resonanz-Steuerung & Mitbestimmungs-Konsens",
         blurb:
-          "Ich navigiere Sie durch anspruchsvolle Stakeholder-Landschaften. Ich übersetze Erwartungen zwischen Fachebene und Management, löse politische Blockaden auf und sorge dafür, dass Ihre Botschaften bei den richtigen Entscheidern ankommen.",
+          "Risikominimierung bei tiefgreifenden Transformationen (z. B. KI-Einführungen). Framing von Veränderungen als Datensignale, um empfindliche mitbestimmte Gremien (Betriebsräte) und C-Level-Stakeholder synchron und konfliktfrei auszurichten.",
       },
       coach: {
-        title: "Sparring / Coaching (Lead, Team)",
+        title: "Executive Sparring & Systemisches Coaching",
         blurb:
-          "Ich stehe Ihnen als „Thinking Partner“ zur Seite. In komplexen Lagen sorge ich durch strukturiertes Sparring für Klarheit, befähige Ihre Schlüsselspieler methodisch und helfe Ihnen, tragfähige Entscheidungen zu treffen.",
+          "Strategischer Resonanzraum für Vorstände, Geschäftsführer, COOs und Projekt-Verantwortliche, etc. Reflexion von Systemblockaden zur schnellen Wiederherstellung der eigenen unternehmerischen Handlungsfähigkeit.",
       },
     },
   },
   en: {
-    title: "What fits your challenge?",
+    title: "Architecture Configuration: Define your system’s impact profile",
     subtitle:
-      "Select 1–2 roles. You can adjust the wording later in the briefing.",
+      "Select 1–2 strategic levers your enterprise currently requires. In the next step, we will co-create the operational briefing.",
     buttonAdd: "Add to brief",
     buttonRemove: "Remove",
-    next: "Next: Create briefing",
+    next: "Confirm Configuration: Proceed to Project Briefing ➔",
     ranks: {
       sys: "Jack",
       ops: "Queen",
@@ -91,25 +90,24 @@ const TEXT: Record<
     },
     cards: {
       sys: {
-        title:
-          "Interim Management & Product, Project, Program & Portfolio Management",
+        title: "Interim Management & Crisis Governance",
         blurb:
-          "I get your critical initiatives on track. As an interim manager, I temporarily assume operational control of your projects or portfolios, bridge vacancies, and ensure results are delivered on time—without friction.",
+          "Stabilizing projects in distress. Reducing administrative overhead, resolving interface blockages, and steering complex portfolios based on recognized standards – strategic, tactical, operational.",
       },
       ops: {
-        title: "Operating system performance",
+        title: "V-OS System Integration (Hardware-Software Symbiosis)",
         blurb:
-          "I align your processes and systems for scalability. I analyze your value chains and transform rigid workflows into a high-performance operating system that relieves your teams and creates measurable efficiency.",
+          "Deployment of a Value Operating System. Anchoring a PnG Governance Hub as a Single Source of Truth, method-agnostic synchronization (V-Model meets Agile), and RAG-driven compliance to economically cut approval lead times.",
       },
       res: {
-        title: "Strategic resonance steering",
+        title: "Strategic Resonance Management & Stakeholder Alignment",
         blurb:
-          "I navigate you through demanding stakeholder landscapes. I translate expectations between technical teams and management, resolve political blockades, and ensure your messages land with the right decision-makers.",
+          "Risk mitigation during deep structural transformations (e.g., AI integration). Framing change as data signals to align sensitive co-determined committees (works councils) and C-level stakeholders synchronously and without friction.",
       },
       coach: {
-        title: "Sparring / Coaching (leadership & teams)",
+        title: "Executive Sparring & Systemic Coaching",
         blurb:
-          "I stand by your side as a Thinking Partner In complex situations, I ensure clarity through structured sparring, methodically empower your key players, and help you make viable decisions.",
+          "Strategic resonance chamber for board members, managing directors, COOs, and project owners etc. Reflection on systemic blockages to swiftly restore entrepreneurial agility.",
       },
     },
   },

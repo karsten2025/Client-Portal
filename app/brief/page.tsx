@@ -377,8 +377,8 @@ export default function BriefPage() {
         <h2 className="font-semibold text-slate-900">
           5.{" "}
           {L === "en"
-            ? "Psychosocial intervention & emotional investment"
-            : "Psychosoziale Interaktions-Level & emotionale Investition"}
+            ? "Systemic Intensity & Risk Profile (Surcharge Factors)"
+            : "Systemische Intensit\u00e4t & Risikoprofil (Aufschlagsfaktoren)"}
         </h2>
 
         {/* Hinweis direkt bei den relevanten Auswahlfeldern */}
@@ -416,8 +416,8 @@ export default function BriefPage() {
         >
           <summary className="font-medium cursor-pointer list-none mb-1 text-slate-900">
             {L === "en"
-              ? "5a. Psychosocial intervention level (system impact)"
-              : "5a. Psychosoziale Interventions-Level (System-Eingriff)"}
+              ? "5a. Depth of Intervention & System Irritation"
+              : "5a. Eingriffstiefe & System-Irritation"}
           </summary>
 
           <p className="text-xs text-slate-700">
@@ -506,8 +506,8 @@ export default function BriefPage() {
         >
           <summary className="font-medium cursor-pointer list-none mb-1 text-slate-900">
             {L === "en"
-              ? "5b. Emotional investment (“caring” level)"
-              : "5b. Grad der emotionalen Investition („Caring“-Modell)"}
+              ? "5b. Operational Identification & Surcharge-Compensation"
+              : "5b. Operative Identifikation & Haftungs-Kompensation"}
           </summary>
 
           <p className="text-xs text-slate-700">

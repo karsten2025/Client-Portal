@@ -348,8 +348,8 @@ export default function OfferPage() {
                   <div className="mt-3 pt-3 border-t border-slate-200">
                     <div className="text-[13px] font-semibold text-slate-900">
                       {L === "en"
-                        ? "Psychosocial depth"
-                        : "Psychosoziale Tiefe"}
+                        ? "Intervention Depth"
+                        : "Eingriffstiefe"}
                     </div>
                     <div className="text-slate-800">{psychSummary}</div>
                   </div>
@@ -357,8 +357,8 @@ export default function OfferPage() {
                   <div className="mt-3 pt-3 border-t border-slate-200">
                     <div className="text-[13px] font-semibold text-slate-900">
                       {L === "en"
-                        ? "Emotional investment (caring)"
-                        : "Emotionale Investition (Caring)"}
+                        ? "Operational Identification"
+                        : "Operative Identifikation"}
                     </div>
                     <div className="text-slate-800">{caringSummary}</div>
                   </div>
@@ -427,12 +427,15 @@ export default function OfferPage() {
                     {BASE_DAY_RATE.toLocaleString(locale, {
                       minimumFractionDigits: 0,
                     })}{" "}
-                    {currency} · {L === "en" ? "factor" : "Faktor"}{" "}
-                    {priceFactor.toFixed(2)}
+                    {currency} · {L === "en" ? "Intervention Depth" : "Eingriffstiefe"}{" "}
+                    {(psych?.priceFactor ?? 1).toFixed(1)} ×{" "}
+                    {L === "en" ? "Operational Identification" : "Operative Identifikation"}{" "}
+                    {(caring?.priceFactor ?? 1).toFixed(1)} ={" "}
+                    {L === "en" ? "Factor" : "Faktor"} {priceFactor.toFixed(2)}
                   </div>
 
                   <div className="pt-1 text-sm font-semibold text-slate-900">
-                    {L === "en" ? "Total (net)" : "Summe (netto)"}:{" "}
+                    {L === "en" ? "Project Days = Project Fee (Netto)" : "Projekttage = Projekthonorar (Netto)"}:{" "}
                     {net.toLocaleString(locale, {
                       minimumFractionDigits: 0,
                     })}{" "}
@@ -514,8 +517,8 @@ export default function OfferPage() {
               {/* Verhaltenpaket */}
               <h4 className="font-semibold mt-3 mb-1">
                 {label(
-                  "2. Verhaltenpaket (Kontext & Stil)",
-                  "2. Behaviour package (context & style)"
+                  "2. Mandats-Kontext & Strategisches Wirkprofil",
+                  "2. Mandate Context & Strategic Impact Profile"
                 )}
               </h4>
               <div className="border border-slate-300 rounded p-2 bg-white mb-2">
@@ -534,8 +537,8 @@ export default function OfferPage() {
               {/* Fachliche Rollen & Qualifikationen */}
               <h4 className="font-semibold mt-3 mb-1">
                 {label(
-                  "3. Fachliche Rollen & Qualifikationen",
-                  "3. Professional roles & skills"
+                  "3. Mandats-Kontext & Strategisches Wirkprofil",
+                  "3. Mandate Context & Strategic Impact Profile"
                 )}
               </h4>
               <div className="border border-slate-300 rounded p-2 bg-white mb-2 space-y-2">
@@ -580,8 +583,8 @@ export default function OfferPage() {
               {/* Psychosoziale Tiefe */}
               <h4 className="font-semibold mt-3 mb-1">
                 {label(
-                  "4. Psychosoziale Interaktions-Tiefe",
-                  "4. Psychosocial intervention depth"
+                  "4. Eingriffstiefe & System-Irritation",
+                  "4. Depth of Intervention & System Irritation"
                 )}
               </h4>
               <div className="border border-slate-300 rounded p-2 bg-white mb-2">
@@ -600,8 +603,8 @@ export default function OfferPage() {
               {/* Caring-Level */}
               <h4 className="font-semibold mt-3 mb-1">
                 {label(
-                  "5. Grad der emotionalen Investition (Caring-Level)",
-                  "5. Degree of emotional investment (caring level)"
+                  "5. Operative Identifikation & Haftungs-Kompensation",
+                  "5. Operational Identification & Surcharge-Compensation"
                 )}
               </h4>
               <div className="border border-slate-300 rounded p-2 bg-white mb-2">
@@ -659,8 +662,8 @@ export default function OfferPage() {
               {/* Hinweis Angebotscharakter */}
               <h4 className="font-semibold mt-3 mb-1">
                 {label(
-                  "7. Hinweis zum Angebotscharakter",
-                  "7. Note on offer character"
+                  "7. Rechtlicher Status: Indikativer Charakter vor Auditierung",
+                  "7. Legal Status: Indicative Character Prior to Auditing"
                 )}
               </h4>
               <div className="border border-slate-300 rounded p-2 bg-white mb-4">
@@ -725,37 +728,37 @@ export default function OfferPage() {
                                 const heading =
                                   group === "ziel"
                                     ? label(
-                                        "A. Ziel & Mandatsrahmen",
-                                        "A. Purpose and mandate"
+                                        "A) Mandatsziel & System-Kontext",
+                                        "A) Mandate Objective & System Context"
                                       )
                                     : group === "leistung"
                                     ? label(
-                                        "B. Leistungen des Auftragnehmers (AN)",
-                                        "B. Services of the Contractor"
+                                        "B) Leistungsumfang (Strategisch/Taktisch/Operativ)",
+                                        "B) Scope of Services (Strategic/Tactical/Operational)"
                                       )
                                     : group === "mitwirkung"
                                     ? label(
-                                        "C. Mitwirkungspflichten des Auftraggebers (AG)",
-                                        "C. Client responsibilities"
+                                        "C) Mitwirkungspflichten des Auftraggebers",
+                                        "C) Client Cooperation & General Dependencies"
                                       )
                                     : group === "ergebnis"
                                     ? label(
-                                        "D. Ergebnisse / Deliverables",
-                                        "D. Results / deliverables"
+                                        "D) Artefakte & System-Ergebnisse",
+                                        "D) Deliverables & Systemic Artifacts"
                                       )
                                     : group === "zeit"
                                     ? label(
-                                        "E. Zeit & Umfang / Vergütung",
-                                        "E. Time & fees"
+                                        "E) Zeitrahmen, Kontingent & Verg\u00fctungsstruktur",
+                                        "E) Timeline, Contingent & Compensation Structure"
                                       )
                                     : group === "kommunikation"
                                     ? label(
-                                        "F. Kommunikation & Eskalation",
-                                        "F. Communication & escalation"
+                                        "F) Kommunikations-Matrix & Datensignale",
+                                        "F) Communication Matrix & Data Signals"
                                       )
                                     : label(
-                                        "G. Abgrenzung / Nicht-Leistungen",
-                                        "G. Exclusions / non-services"
+                                        "G) Systemische Abgrenzung (Out of Scope)",
+                                        "G) Systemic Boundary (Out of Scope)"
                                       );
 
                                 return (

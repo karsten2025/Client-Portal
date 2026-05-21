@@ -216,9 +216,29 @@ export function buildContractSection3(
   }
 
   // -----------------------------
+  // 5) Feste Klauseln: Reisekosten, Reisezeit, Remote-Leistungen
+  // -----------------------------
+  const part5 =
+    L === "de"
+      ? [
+          "",
+          "(5) Vergütungsstruktur: Reisekosten, Reisezeit & Remote-Leistungen",
+          "\u2022 Reisekosten & Spesen: F\u00fcr notwendige operative Eins\u00e4tze vor Ort (z.\u202fB. direkt an der Betriebsst\u00e4tte oder im Werk des Auftraggebers) werden Fahrtkosten mit einer Pauschale von 0,70\u202f\u20ac netto pro Kilometer abgerechnet. Alternativ werden die tats\u00e4chlichen Kosten f\u00fcr Bahnfahrten (1.\u202fKlasse) oder Fl\u00fcge (Economy) eins zu eins weitergegeben.",
+          "\u2022 Reisezeit-Verg\u00fctung: Notwendige Reise- und Anfahrtszeiten zum Einsatzort des Auftraggebers werden als operative Systemzeit gewertet und mit 100\u202f% des regul\u00e4ren Stundensatzes (\u00e4quivalent zum vereinbarten Tagessatz-Modell) berechnet.",
+          "\u2022 Abrechnung von Remote-Leistungen: Kleinere, au\u00dferhalb der vereinbarten Projekttage anfallende Remote-Leistungen (z.\u202fB. telefonisches Sparring, System-Audits aus der Ferne) werden pr\u00e4zise in Zeiteinheiten von 15 Minuten (0,25 Stunden) auf Basis des Stundensatz\u00e4quivalents erfasst und abgerechnet.",
+        ].join("\n")
+      : [
+          "",
+          "(5) Compensation Structure: Travel Expenses, Travel Time & Remote Services",
+          "\u2022 Travel Expenses & Per Diems: For necessary on-site operations (e.g., directly at the client\u2019s production facility or plant), travel costs will be billed at a flat rate of \u20ac\u202f0.70 netto per kilometre. Alternatively, actual costs for train travel (1st class) or flights (Economy) will be passed through 1:1.",
+          "\u2022 Travel Time Compensation: Necessary travel and transit times to the client\u2019s location are considered operational system time and will be billed at 100\u202f% of the regular hourly rate (equivalent to the agreed day rate model).",
+          "\u2022 Remote Services Billing: Smaller remote services occurring outside the agreed project days (e.g., telephone sparring, remote system audits) will be precisely recorded and billed in time units of 15 minutes (0.25 hours) based on the hourly rate equivalent.",
+        ].join("\n");
+
+  // -----------------------------
   // Zusammenbauen
   // -----------------------------
-  const parts = [part1, part2General, part2Modules, part3, part4].filter(
+  const parts = [part1, part2General, part2Modules, part3, part4, part5].filter(
     (p) => p && p.trim().length > 0
   );
 
