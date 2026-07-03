@@ -10,6 +10,7 @@ import { OfferPdfDocument } from "../../components/OfferPdf";
 import type { ContractSection3Input } from "../../lib/contractSection3";
 import type { Lang } from "../../lib/catalog";
 import type { SkillNotes } from "../../components/OfferPdf";
+import type { PricingResult } from "../../lib/pricing";
 
 // Wir verwenden POST, weil wir viele Daten (Briefing + Angebot + §3) schicken.
 export async function POST(request: Request) {
@@ -25,11 +26,7 @@ export async function POST(request: Request) {
     psychLabel: string;
     caringLabel: string;
     notes: SkillNotes;
-    days: number;
-    dayRate: number;
-    net: number;
-    tax: number;
-    gross: number;
+    pricing: PricingResult;
     currency: string;
     section3Input: ContractSection3Input;
   };
@@ -42,11 +39,7 @@ export async function POST(request: Request) {
     psychLabel,
     caringLabel,
     notes,
-    days,
-    dayRate,
-    net,
-    tax,
-    gross,
+    pricing,
     currency,
     section3Input,
   } = body;
@@ -93,11 +86,7 @@ export async function POST(request: Request) {
     psychLabel,
     caringLabel,
     notes,
-    days,
-    dayRate,
-    net,
-    tax,
-    gross,
+    pricing,
     currency,
     section3Input,
     logoWatermark,

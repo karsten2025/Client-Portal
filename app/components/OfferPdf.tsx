@@ -8,6 +8,8 @@ import {
 } from "../lib/contractSection3";
 
 import type { Lang } from "../lib/catalog";
+import type { PricingResult } from "../lib/pricing";
+import { BASE_DAY_RATE, INTENSIVE_SURCHARGE, SENIOR_DAY_HOURS } from "../lib/pricing";
 import {
   getRoleRequirementsFor,
   getRoleModuleLabel,
@@ -32,11 +34,7 @@ type OfferPdfProps = {
   psychLabel: string;
   caringLabel: string;
   notes: SkillNotes;
-  days: number;
-  dayRate: number;
-  net: number;
-  tax: number;
-  gross: number;
+  pricing: PricingResult;
   currency: string;
   section3Input: ContractSection3Input;
   logoWatermark?: string;
@@ -158,15 +156,14 @@ export function OfferPdfDocument(props: OfferPdfProps) {
     psychLabel,
     caringLabel,
     notes,
-    days,
-    dayRate,
-    net,
-    tax,
-    gross,
+    pricing,
     currency,
     section3Input,
     logoWatermark,
   } = props;
+
+  const { days, dayRate, net, tax, gross, surchargeApplies, surchargeReason } =
+    pricing;
 
   const L = lang;
   const locale = L === "en" ? "en-US" : "de-DE";
@@ -449,6 +446,49 @@ export function OfferPdfDocument(props: OfferPdfProps) {
           <View style={styles.section}>
             <Text style={styles.smallHeading}>
               {label("6. Preisübersicht", "6. Price overview")}
+            </Text>
+            <Text style={styles.paragraph}>
+              {label("Ihr Tagessatz: ", "Your day rate: ")}
+              {dayRate.toLocaleString(locale, { minimumFractionDigits: 0 })}{" "}
+              {currency} ({label("netto", "net")} — {pricing.tierLabel[L]} ·{" "}
+              {label("Senior-Tag", "Senior day")} {SENIOR_DAY_HOURS}{" "}
+              {label("h", "h")})
+            </Text>
+            <Text style={styles.paragraph}>
+              {label("Stundensatz: ", "Hourly rate: ")}
+              {pricing.hourlyRate.toLocaleString(locale, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}{" "}
+              {currency}/h
+            </Text>
+            <Text style={styles.paragraph}>
+              {label("Halbtag: ", "Half day: ")}
+              {pricing.halfDayRate.toLocaleString(locale, {
+                minimumFractionDigits: 0,
+              })}{" "}
+              {currency} ({label("50 % des Tagessatzes", "50% of day rate")})
+            </Text>
+            {surchargeApplies ? (
+              <>
+                <Text style={styles.paragraph}>
+                  {label("Basis: ", "Base: ")}
+                  {BASE_DAY_RATE.toLocaleString(locale, {
+                    minimumFractionDigits: 0,
+                  })}{" "}
+                  {currency} · {label("Intensiv-Zuschlag: ", "Intensive surcharge: ")}
+                  +{INTENSIVE_SURCHARGE.toLocaleString(locale, {
+                    minimumFractionDigits: 0,
+                  })}{" "}
+                  {currency}
+                </Text>
+                <Text style={[styles.paragraph, { color: "#475569" }]}>
+                  {surchargeReason[L]}
+                </Text>
+              </>
+            ) : null}
+            <Text style={[styles.paragraph, { color: "#475569" }]}>
+              {pricing.timeModelNote[L]}
             </Text>
             <Text style={styles.paragraph}>
               {label("Tage: ", "Days: ")}

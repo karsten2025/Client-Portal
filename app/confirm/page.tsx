@@ -22,11 +22,11 @@ import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { ProcessBar } from "../components/ProcessBar";
 import { validateSelection } from "../lib/mandateRules";
 import { formatCurrency } from "../lib/format";
+import { calculatePricing } from "../lib/pricing";
+import { PricingBreakdown } from "../components/PricingBreakdown";
 
 // gleiche Struktur wie im Offer
 type SkillNotes = Record<string, { need?: string; outcome?: string }>;
-
-const BASE_DAY_RATE = 2000;
 
 export default function ConfirmPage() {
   const { lang } = useLanguage();
@@ -93,13 +93,18 @@ export default function ConfirmPage() {
     return { behavior: b, selectedSkills: s, psych: p, caring: c };
   }, [behaviorId, skillIds, psychoId, caringId]);
 
-  // Preislogik (wie in Offer)
-  const priceFactor =
-    (psych?.priceFactor ?? 1) * (caring?.priceFactor ?? 1) || 1;
-  const dayRate = Math.round(BASE_DAY_RATE * priceFactor);
-  const net = dayRate * days;
-  const tax = Math.round(net * 0.19 * 100) / 100;
-  const gross = Math.round((net + tax) * 100) / 100;
+  // Preis-Logik (Variante C: Basis + ein Zuschlag aus Briefing-Daten)
+  const pricing = useMemo(
+    () =>
+      calculatePricing({
+        behaviorId: behaviorId as BehaviorId | "",
+        psychoId: psychoId as PsychoId | "",
+        caringId: caringId as CaringId | "",
+        days,
+      }),
+    [behaviorId, psychoId, caringId, days]
+  );
+  const { dayRate, gross } = pricing;
 
   const behaviorSummary = behavior
     ? `${behavior.ctx[L]} – ${behavior.pkg[L]}`
@@ -292,22 +297,12 @@ export default function ConfirmPage() {
                     </span>
                   </div>
 
-                  <div className="text-xs text-slate-700">
-                    {L === "en" ? "Base rate" : "Basis-Tagessatz"}:{" "}
-                    {BASE_DAY_RATE.toLocaleString(locale, {
-                      minimumFractionDigits: 0,
-                    })}{" "}
-                    {currency} · {L === "en" ? "factor" : "Faktor"}{" "}
-                    {priceFactor.toFixed(2)}
-                  </div>
-
-                  <div className="pt-1 text-sm font-semibold text-slate-900">
-                    {L === "en" ? "Total (net)" : "Summe (netto)"}:{" "}
-                    {net.toLocaleString(locale, {
-                      minimumFractionDigits: 0,
-                    })}{" "}
-                    {currency}
-                  </div>
+                  <PricingBreakdown
+                    lang={L}
+                    pricing={pricing}
+                    currency={currency}
+                    showProjectTotal
+                  />
                   <div className="text-xs text-slate-700">
                     {label("inkl. USt:", "incl. VAT:")}{" "}
                     {gross.toLocaleString(locale, {

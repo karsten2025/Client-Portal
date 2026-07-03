@@ -9,6 +9,11 @@ import {
   type PsychoId,
   type CaringId,
 } from "./catalog";
+import {
+  MAX_BILLABLE_HOURS_PER_DAY,
+  SENIOR_DAY_HOURS,
+  getTimeModelNote,
+} from "./pricing";
 
 export type ContractSection3Input = {
   behaviorId?: BehaviorId | "";
@@ -16,6 +21,10 @@ export type ContractSection3Input = {
   skillIds?: string[]; // aus LOCAL_KEYS.skills
   psychoId?: PsychoId | "";
   caringId?: CaringId | "";
+  /** Tagessatz netto — für explizite Vergütungsklauseln in (5) */
+  dayRate?: number;
+  hourlyRate?: number;
+  halfDayRate?: number;
 };
 
 /**
@@ -216,23 +225,44 @@ export function buildContractSection3(
   }
 
   // -----------------------------
-  // 5) Feste Klauseln: Reisekosten, Reisezeit, Remote-Leistungen
+  // 5) Feste Klauseln: Zeitmodell, Reisekosten, Reisezeit, Remote-Leistungen
   // -----------------------------
+  const hasRates =
+    input.dayRate != null &&
+    input.hourlyRate != null &&
+    input.halfDayRate != null;
+
+  const timeModelClause = hasRates
+    ? getTimeModelNote(L, input.dayRate!, input.hourlyRate!, input.halfDayRate!)
+    : L === "de"
+    ? `Ein Projekttag (Senior-Tag) umfasst ${SENIOR_DAY_HOURS} abrechenbare Stunden. Pro Kalendertag höchstens ${MAX_BILLABLE_HOURS_PER_DAY} Stunden abrechenbar.`
+    : `A project day (senior day) covers ${SENIOR_DAY_HOURS} billable hours. A maximum of ${MAX_BILLABLE_HOURS_PER_DAY} hours may be billed per calendar day.`;
+
+  const hourlyRef = hasRates
+    ? L === "de"
+      ? `${input.hourlyRate!.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\u202f€ netto/h`
+      : `EUR\u202f${input.hourlyRate!.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} net/h`
+    : L === "de"
+    ? "dem vereinbarten Stundensatz (Tagessatz ÷ 6)"
+    : "the agreed hourly rate (day rate ÷ 6)";
+
   const part5 =
     L === "de"
       ? [
           "",
-          "(5) Vergütungsstruktur: Reisekosten, Reisezeit & Remote-Leistungen",
-          "\u2022 Reisekosten & Spesen: F\u00fcr notwendige operative Eins\u00e4tze vor Ort (z.\u202fB. direkt an der Betriebsst\u00e4tte oder im Werk des Auftraggebers) werden Fahrtkosten mit einer Pauschale von 0,70\u202f\u20ac netto pro Kilometer abgerechnet. Alternativ werden die tats\u00e4chlichen Kosten f\u00fcr Bahnfahrten (1.\u202fKlasse) oder Fl\u00fcge (Economy) eins zu eins weitergegeben.",
-          "\u2022 Reisezeit-Verg\u00fctung: Notwendige Reise- und Anfahrtszeiten zum Einsatzort des Auftraggebers werden als operative Systemzeit gewertet und mit 100\u202f% des regul\u00e4ren Stundensatzes (\u00e4quivalent zum vereinbarten Tagessatz-Modell) berechnet.",
-          "\u2022 Abrechnung von Remote-Leistungen: Kleinere, au\u00dferhalb der vereinbarten Projekttage anfallende Remote-Leistungen (z.\u202fB. telefonisches Sparring, System-Audits aus der Ferne) werden pr\u00e4zise in Zeiteinheiten von 15 Minuten (0,25 Stunden) auf Basis des Stundensatz\u00e4quivalents erfasst und abgerechnet.",
+          "(5) Vergütungsstruktur: Zeitmodell, Reisekosten, Reisezeit & Remote-Leistungen",
+          `\u2022 Zeitmodell: ${timeModelClause}`,
+          `\u2022 Reisekosten & Spesen: F\u00fcr notwendige operative Eins\u00e4tze vor Ort (z.\u202fB. direkt an der Betriebsst\u00e4tte oder im Werk des Auftraggebers) werden Fahrtkosten mit einer Pauschale von 0,70\u202f\u20ac netto pro Kilometer abgerechnet. Alternativ werden die tats\u00e4chlichen Kosten f\u00fcr Bahnfahrten (1.\u202fKlasse) oder Fl\u00fcge (Economy) eins zu eins weitergegeben.`,
+          `\u2022 Reisezeit-Verg\u00fctung: Notwendige Reise- und Anfahrtszeiten zum Einsatzort des Auftraggebers werden als operative Systemzeit gewertet und mit 100\u202f% des regul\u00e4ren Stundensatzes (${hourlyRef}) berechnet.`,
+          `\u2022 Abrechnung von Remote-Leistungen: Kleinere, au\u00dferhalb der vereinbarten Projekttage anfallende Remote-Leistungen (z.\u202fB. telefonisches Sparring, System-Audits aus der Ferne) werden pr\u00e4zise in Zeiteinheiten von 15 Minuten (0,25 Stunden) zum Stundensatz von ${hourlyRef} erfasst und abgerechnet.`,
         ].join("\n")
       : [
           "",
-          "(5) Compensation Structure: Travel Expenses, Travel Time & Remote Services",
-          "\u2022 Travel Expenses & Per Diems: For necessary on-site operations (e.g., directly at the client\u2019s production facility or plant), travel costs will be billed at a flat rate of \u20ac\u202f0.70 netto per kilometre. Alternatively, actual costs for train travel (1st class) or flights (Economy) will be passed through 1:1.",
-          "\u2022 Travel Time Compensation: Necessary travel and transit times to the client\u2019s location are considered operational system time and will be billed at 100\u202f% of the regular hourly rate (equivalent to the agreed day rate model).",
-          "\u2022 Remote Services Billing: Smaller remote services occurring outside the agreed project days (e.g., telephone sparring, remote system audits) will be precisely recorded and billed in time units of 15 minutes (0.25 hours) based on the hourly rate equivalent.",
+          "(5) Compensation Structure: Time model, travel expenses, travel time & remote services",
+          `\u2022 Time model: ${timeModelClause}`,
+          `\u2022 Travel Expenses & Per Diems: For necessary on-site operations (e.g., directly at the client\u2019s production facility or plant), travel costs will be billed at a flat rate of \u20ac\u202f0.70 netto per kilometre. Alternatively, actual costs for train travel (1st class) or flights (Economy) will be passed through 1:1.`,
+          `\u2022 Travel Time Compensation: Necessary travel and transit times to the client\u2019s location are considered operational system time and will be billed at 100\u202f% of the regular hourly rate (${hourlyRef}).`,
+          `\u2022 Remote Services Billing: Smaller remote services occurring outside the agreed project days (e.g., telephone sparring, remote system audits) will be precisely recorded and billed in time units of 15 minutes (0.25 hours) at the hourly rate of ${hourlyRef}.`,
         ].join("\n");
 
   // -----------------------------

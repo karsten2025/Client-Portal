@@ -239,8 +239,8 @@ export const PSYCH_LEVELS: Level[] = [
       en: "No deep psychological conflict intervention or personal crisis counseling.",
     },
     factorLabel: {
-      de: "Faktor 1,0 (Basis-Intervention)",
-      en: "Factor 1.0 (base intervention)",
+      de: "Leistungsumfang: Standard-Tiefe",
+      en: "Scope: standard depth",
     },
   },
   {
@@ -271,8 +271,8 @@ export const PSYCH_LEVELS: Level[] = [
       en: "Therapeutic measures or company-wide culture programs without a specific mandate.",
     },
     factorLabel: {
-      de: "Faktor 1,5 (erweitertes Mandat)",
-      en: "Factor 1.5 (extended mandate)",
+      de: "Leistungsumfang: erweiterte Intervention",
+      en: "Scope: extended intervention",
     },
   },
   {
@@ -303,8 +303,8 @@ export const PSYCH_LEVELS: Level[] = [
       en: "Executive liability (officer status) for corporate entities or corporate governance.",
     },
     factorLabel: {
-      de: "Faktor 2,0 (hohe Systemkomplexität)",
-      en: "Factor 2.0 (high system complexity)",
+      de: "Leistungsumfang: tiefe Systemarbeit",
+      en: "Scope: deep system work",
     },
   },
 ];
@@ -346,8 +346,8 @@ export const CARING_LEVELS: Level[] = [
       en: "Deep cultural integration, no psychological counseling for leadership or teams.",
     },
     priceLabel: {
-      de: "Faktor 1,0 (Basis-Caring)",
-      en: "Factor 1.0 (base caring)",
+      de: "Leistungsumfang: fokussierte Auftragsabwicklung",
+      en: "Scope: focused delivery",
     },
   },
   {
@@ -386,8 +386,8 @@ export const CARING_LEVELS: Level[] = [
       en: "No assumption of disciplinary HR responsibility outside the mandate.",
     },
     priceLabel: {
-      de: "Faktor 1,5 (erhöhtes Caring)",
-      en: "Factor 1.5 (increased caring)",
+      de: "Leistungsumfang: aktives Stakeholder-Engagement",
+      en: "Scope: active stakeholder engagement",
     },
   },
   {
@@ -426,8 +426,8 @@ export const CARING_LEVELS: Level[] = [
       en: "Corporate executive liability (x-officer status) or integration into the internal organization.",
     },
     priceLabel: {
-      de: "Faktor 2,0 (maximales Caring)",
-      en: "Factor 2.0 (maximum caring)",
+      de: "Leistungsumfang: maximale persönliche Einbindung",
+      en: "Scope: maximum personal commitment",
     },
   },
 ];

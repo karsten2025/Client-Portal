@@ -23,8 +23,11 @@ import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { validateSelection } from "../lib/mandateRules";
 import type { SkillNotes } from "../components/OfferPdf"; // nur Type, kein Runtime-Import
 import { formatCurrency } from "../lib/format";
-
-// 🔹 Single Source: §3 + Requirements
+import { calculatePricing } from "../lib/pricing";
+import {
+  PricingBreakdown,
+  PricingOverviewLines,
+} from "../components/PricingBreakdown";
 import {
   buildContractSection3,
   type ContractSection3Input,
@@ -35,8 +38,6 @@ import {
   REQUIREMENT_GROUP_ORDER,
   type RoleId,
 } from "../lib/roleRequirements";
-
-const BASE_DAY_RATE = 2000;
 
 export default function OfferPage() {
   const { lang } = useLanguage();
@@ -137,13 +138,18 @@ export default function OfferPage() {
     return { behavior: b, selectedSkills: s, psych: p, caring: c };
   }, [behaviorId, skillIds, psychoId, caringId]);
 
-  // Preis-Logik an *einer* Stelle
-  const priceFactor =
-    (psych?.priceFactor ?? 1) * (caring?.priceFactor ?? 1) || 1;
-  const dayRate = Math.round(BASE_DAY_RATE * priceFactor);
-  const net = dayRate * days;
-  const tax = Math.round(net * 0.19 * 100) / 100;
-  const gross = Math.round((net + tax) * 100) / 100;
+  // Preis-Logik (Variante C: Basis + ein Zuschlag aus Briefing-Daten)
+  const pricing = useMemo(
+    () =>
+      calculatePricing({
+        behaviorId: behaviorId as BehaviorId | "",
+        psychoId: psychoId as PsychoId | "",
+        caringId: caringId as CaringId | "",
+        days,
+      }),
+    [behaviorId, psychoId, caringId, days]
+  );
+  const { dayRate } = pricing;
 
   // Strings für Summary / Vorschau
   const behaviorSummary = behavior
@@ -182,6 +188,9 @@ export default function OfferPage() {
     skillIds,
     psychoId: psychoId as PsychoId | "",
     caringId: caringId as CaringId | "",
+    dayRate: pricing.dayRate,
+    hourlyRate: pricing.hourlyRate,
+    halfDayRate: pricing.halfDayRate,
   };
 
   const section3Text = buildContractSection3(L, section3Input);
@@ -212,11 +221,7 @@ export default function OfferPage() {
         psychLabel: psychSummary,
         caringLabel: caringSummary,
         notes,
-        days,
-        dayRate,
-        net,
-        tax,
-        gross,
+        pricing,
         currency,
         // wichtig: der gleiche Input, den auch die Vertragsvorschau nutzt
         section3Input,
@@ -422,25 +427,12 @@ export default function OfferPage() {
                     </span>
                   </div>
 
-                  <div className="text-xs text-slate-700">
-                    {L === "en" ? "Base rate" : "Basis-Tagessatz"}:{" "}
-                    {BASE_DAY_RATE.toLocaleString(locale, {
-                      minimumFractionDigits: 0,
-                    })}{" "}
-                    {currency} · {L === "en" ? "Intervention Depth" : "Eingriffstiefe"}{" "}
-                    {(psych?.priceFactor ?? 1).toFixed(1)} ×{" "}
-                    {L === "en" ? "Operational Identification" : "Operative Identifikation"}{" "}
-                    {(caring?.priceFactor ?? 1).toFixed(1)} ={" "}
-                    {L === "en" ? "Factor" : "Faktor"} {priceFactor.toFixed(2)}
-                  </div>
-
-                  <div className="pt-1 text-sm font-semibold text-slate-900">
-                    {L === "en" ? "Project Days = Project Fee (Netto)" : "Projekttage = Projekthonorar (Netto)"}:{" "}
-                    {net.toLocaleString(locale, {
-                      minimumFractionDigits: 0,
-                    })}{" "}
-                    {currency}
-                  </div>
+                  <PricingBreakdown
+                    lang={L}
+                    pricing={pricing}
+                    currency={currency}
+                    showProjectTotal
+                  />
                 </div>
               </div>
             </div>
@@ -625,38 +617,11 @@ export default function OfferPage() {
                 {label("6. Preisübersicht", "6. Price overview")}
               </h4>
               <div className="border border-slate-300 rounded p-2 bg-white mb-2 space-y-1">
-                <div>
-                  {label("Tage:", "Days:")}{" "}
-                  {days.toLocaleString(locale, {
-                    minimumFractionDigits: 0,
-                  })}{" "}
-                  · {label("Satz/Tag:", "Rate/day:")}{" "}
-                  {dayRate.toLocaleString(locale, {
-                    minimumFractionDigits: 0,
-                  })}{" "}
-                  {currency}
-                </div>
-                <div>
-                  {label("Netto:", "Net total:")}{" "}
-                  {net.toLocaleString(locale, {
-                    minimumFractionDigits: 2,
-                  })}{" "}
-                  {currency}
-                </div>
-                <div>
-                  {label("Umsatzsteuer 19%:", "VAT 19%:")}{" "}
-                  {tax.toLocaleString(locale, {
-                    minimumFractionDigits: 2,
-                  })}{" "}
-                  {currency}
-                </div>
-                <div className="font-semibold">
-                  {label("Endbetrag:", "Total amount:")}{" "}
-                  {gross.toLocaleString(locale, {
-                    minimumFractionDigits: 2,
-                  })}{" "}
-                  {currency}
-                </div>
+                <PricingOverviewLines
+                  lang={L}
+                  pricing={pricing}
+                  currency={currency}
+                />
               </div>
 
               {/* Hinweis Angebotscharakter */}

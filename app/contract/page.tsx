@@ -25,6 +25,7 @@ import {
   buildContractSection3,
   type ContractSection3Input,
 } from "../lib/contractSection3";
+import { calculatePricing } from "../lib/pricing";
 import {
   getRoleRequirementsFor,
   getRoleModuleLabel,
@@ -49,6 +50,7 @@ export default function ContractPage() {
   const [caringId, setCaringId] = useState<string>("");
   const [notes, setNotes] = useState<SkillNotes>({});
   const [roleIds, setRoleIds] = useState<CardId[]>([]);
+  const [days, setDays] = useState<number>(5);
 
   // Mandatslogik
   const validation = validateSelection(
@@ -66,6 +68,7 @@ export default function ContractPage() {
       const skillsRaw = window.localStorage.getItem(LOCAL_KEYS.skills);
       const notesRaw = window.localStorage.getItem(LOCAL_KEYS.notes);
       const rolesRaw = window.localStorage.getItem("brief.selected");
+      const daysRaw = window.localStorage.getItem("offer.days");
 
       setBrief(formRaw ? JSON.parse(formRaw) : {});
       setSkillIds(skillsRaw ? (JSON.parse(skillsRaw) as string[]) : []);
@@ -74,6 +77,10 @@ export default function ContractPage() {
       setBehaviorId(window.localStorage.getItem(LOCAL_KEYS.behavior) || "");
       setPsychoId(window.localStorage.getItem(LOCAL_KEYS.psycho) || "");
       setCaringId(window.localStorage.getItem(LOCAL_KEYS.caring) || "");
+      if (daysRaw) {
+        const parsed = Number(daysRaw);
+        if (!Number.isNaN(parsed) && parsed > 0) setDays(parsed);
+      }
     } catch {
       setBrief({});
       setSkillIds([]);
@@ -113,6 +120,17 @@ export default function ContractPage() {
   const psychLabel = psych ? psych.name[L] : "";
   const caringLabel = caring ? caring.name[L] : "";
 
+  const pricing = useMemo(
+    () =>
+      calculatePricing({
+        behaviorId: behaviorId as BehaviorId | "",
+        psychoId: psychoId as PsychoId | "",
+        caringId: caringId as CaringId | "",
+        days,
+      }),
+    [behaviorId, psychoId, caringId, days]
+  );
+
   // 🔹 Single Source of Truth: Input für contractSection3.ts
   const section3Input: ContractSection3Input = {
     behaviorId: behaviorId as BehaviorId | "",
@@ -120,6 +138,9 @@ export default function ContractPage() {
     skillIds,
     psychoId: psychoId as PsychoId | "",
     caringId: caringId as CaringId | "",
+    dayRate: pricing.dayRate,
+    hourlyRate: pricing.hourlyRate,
+    halfDayRate: pricing.halfDayRate,
   };
 
   const section3Text = buildContractSection3(L, section3Input);

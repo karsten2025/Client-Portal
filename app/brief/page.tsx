@@ -17,6 +17,7 @@ import { tPair } from "../lib/i18n";
 import { ProcessBar } from "../components/ProcessBar";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { validateSelection } from "../lib/mandateRules";
+import { getBriefingPricingHint } from "../lib/pricing";
 
 type Notes = Record<string, { need?: string; outcome?: string }>;
 
@@ -144,20 +145,18 @@ export default function BriefPage() {
     }
   }, [recommendedPsychoId, psychoId]);
 
-  // Aktuell gewählte Pakete für 5a/5b inkl. Faktor
-  const psychoPackage = useMemo(
-    () => PSYCHO_PACKAGES.find((p) => p.id === psychoId) ?? null,
-    [psychoId]
-  );
-  const caringPackage = useMemo(
-    () => CARING_PACKAGES.find((c) => c.id === caringId) ?? null,
-    [caringId]
+  // Preis-Hinweis aus Briefing-Daten (Scope-Auswahl 5a/5b fließt in Zuschlag-Logik ein)
+  const pricingHint = useMemo(
+    () =>
+      getBriefingPricingHint(L, {
+        behaviorId,
+        psychoId,
+        caringId,
+      }),
+    [L, behaviorId, psychoId, caringId]
   );
 
-  const psychoFactor = psychoPackage?.priceFactor ?? 1;
-  const caringFactor = caringPackage?.priceFactor ?? 1;
-  const hasFactorSelection = !!psychoPackage || !!caringPackage;
-  const combinedFactor = hasFactorSelection ? psychoFactor * caringFactor : 1;
+  const showPricingHint = !!behaviorId || !!psychoId || !!caringId;
 
   const label = (de: string, en: string) => tPair(L, de, en);
 
@@ -405,8 +404,8 @@ export default function BriefPage() {
 
         <p className="text-sm text-slate-700">
           {L === "en"
-            ? "Here you define the depth of system intervention and how much emotional investment is part of the mandate. Think of it as the emotional insurance premium."
-            : "Hier legen Sie die Tiefe der System-Intervention und den Grad der emotionalen Investition fest – gewissermaßen die emotionale Versicherungsprämie des Mandats."}
+            ? "Here you define how deeply we engage with team and stakeholder dynamics — separate from the day rate."
+            : "Hier legen Sie fest, wie tief wir ins Team- und Stakeholder-System gehen — unabhängig vom Tagessatz."}
         </p>
 
         {/* 5a – Psychosoziale Interventions-Level */}
@@ -607,17 +606,14 @@ export default function BriefPage() {
           </div>
         </details>
 
-        {/* Faktor-Hinweis für 5a/5b kombiniert */}
-        {hasFactorSelection && (
-          <p className="text-[11px] text-slate-700 mt-1">
-            {L === "en"
-              ? `Current factor on the base day rate: ${combinedFactor.toFixed(
-                  2
-                )} (psychosocial level × caring). The concrete day rate is calculated in the next step on the offer page.`
-              : `Aktueller Faktor auf den Basis-Tagessatz: ${combinedFactor.toFixed(
-                  2
-                )} (psychosoziales Level × Caring). Die konkrete Tagessatz-Berechnung sehen Sie im nächsten Schritt im Angebots-Entwurf.`}
-          </p>
+        {/* Preis-Hinweis aus Briefing-Daten */}
+        {showPricingHint && (
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-700 leading-relaxed">
+            <span className="font-semibold text-slate-900">
+              {L === "en" ? "Pricing note: " : "Preis-Hinweis: "}
+            </span>
+            {pricingHint}
+          </div>
         )}
       </section>
 
